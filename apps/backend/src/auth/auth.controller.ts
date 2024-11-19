@@ -8,6 +8,7 @@ import { signUpResponseDecorator } from './decorator/signup.decorator';
 import { loginResponseDecorator } from './decorator/login.decorator';
 import { AuthGuard } from '@nestjs/passport';
 import { GoogleLoginDto } from './dto/googleLogin.dto';
+import { KakaoLoginDto } from './dto/kakaoLogin.dto';
 import { oauthResponseDecorator } from './decorator/oauth.decorator';
 
 @Controller('api/auth')
@@ -37,10 +38,24 @@ export class AuthController {
 
   @Get('google/redirect')
   @UseGuards(AuthGuard('google'))
+  @ApiOperation({ summary: '구글 로그인 리다이렉션 API' })
   @oauthResponseDecorator()
-  @ApiOperation({ summary: '구글 로그인 후 리다이렉션 API' })
   async googleRedirect(@Req() googleLoginDto: GoogleLoginDto) {
     const tokens = await this.authService.googleLogin(googleLoginDto);
+    return successhandler(successMessage.LOGIN_SUCCESS, tokens);
+  }
+
+  @Get('kakao')
+  @UseGuards(AuthGuard('kakao'))
+  @ApiOperation({ summary: '카카오 로그인 API' })
+  async kakaoLogin() {}
+
+  @Get('kakao/redirect')
+  @UseGuards(AuthGuard('kakao'))
+  @ApiOperation({ summary: '카카오 로그인 리다이렉션 API' })
+  @oauthResponseDecorator()
+  async kakaoRedirect(@Req() kakaoLoginDto: KakaoLoginDto) {
+    const tokens = await this.authService.kakaoLogin(kakaoLoginDto);
     return successhandler(successMessage.LOGIN_SUCCESS, tokens);
   }
 }

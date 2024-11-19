@@ -6,6 +6,7 @@ import { authQueries } from './auth.queries';
 import { LoginDto } from './dto/login.dto';
 import { JwtService } from '@nestjs/jwt';
 import { GoogleLoginDto } from './dto/googleLogin.dto';
+import { KakaoLoginDto } from './dto/kakaoLogin.dto';
 
 @Injectable()
 export class AuthService {
@@ -69,12 +70,12 @@ export class AuthService {
     return { accessToken, refreshToken };
   }
 
-  async googleLogin(googleLoginDto: GoogleLoginDto) {
-    const { email, name } = googleLoginDto;
+  async loginWithSocialMedia(email: string, nickname: string) {
     const existingUser = await this.databaseService.query(authQueries.findByEmailQuery, [email]);
+
     if (!existingUser) {
       const hashedPassword = await bcrypt.hash('default', 10);
-      await this.databaseService.query(authQueries.signUpQuery, [email, hashedPassword, name]);
+      await this.databaseService.query(authQueries.signUpQuery, [email, hashedPassword, nickname]);
     }
     const member = await this.databaseService.query(authQueries.findByEmailQuery, [email]);
     const payload = {
@@ -85,5 +86,15 @@ export class AuthService {
     const accessToken = this.jwtService.sign(payload, { expiresIn: '1h' });
     const refreshToken = this.jwtService.sign(payload, { expiresIn: '7d' });
     return { accessToken, refreshToken };
+  }
+
+  async googleLogin(googleLoginDto: GoogleLoginDto) {
+    const { email, name } = googleLoginDto;
+    return this.loginWithSocialMedia(email, name);
+  }
+
+  async kakaoLogin(kakaoLoginDto: KakaoLoginDto) {
+    const { email, nickname } = kakaoLoginDto;
+    return this.loginWithSocialMedia(email, nickname);
   }
 }
