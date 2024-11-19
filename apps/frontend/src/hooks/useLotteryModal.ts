@@ -1,6 +1,6 @@
 import { useState } from 'react';
 
-const useLotteryModal = () => {
+const UseLotteryModal = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const openModal = () => setIsModalOpen(true);
@@ -10,4 +10,4 @@ const useLotteryModal = () => {
   return { isModalOpen, openModal, handleConfirm, handleCancel };
 };
 
-export default useLotteryModal;
+export default UseLotteryModal;

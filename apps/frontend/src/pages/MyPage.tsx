@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Transaction, ApiCrop, Crop } from '@/types/Index';
-import { getStepImage } from '@/utils/GetFarmImg';
+import GetFarmImg from '@/utils/GetFarmImg';
 import Profile from '@/components/Profile';
 import CropList from '@/components/CropList';
 import TransactionTable from '@/components/TransactionTable';
@@ -129,7 +129,7 @@ const MyPage: React.FC = () => {
         <Profile id={id} modalOpen={modalOpen} />
         <div
           className="flex justify-center items-center bg-no-repeat bg-contain bg-center w-[300px] h-[280px]"
-          style={{ backgroundImage: `url(${getStepImage(amount)})` }}
+          style={{ backgroundImage: `url(${GetFarmImg(amount)})` }}
         />
       </div>
 

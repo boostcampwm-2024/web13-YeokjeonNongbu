@@ -1,8 +1,8 @@
 import LotteryTicket from '@/components/LotteryTicket';
 import LotteryModal from '@/components/LotteryModal';
 import LotteryButtons from '@/components/LotteryButtons';
-import useLotteryModal from '@/hooks/useLotteryModal';
-import useLotteryCanvas from '@/hooks/useLotteryCanvas';
+import useLotteryModal from '@/hooks/UseLotteryModal';
+import useLotteryCanvas from '@/hooks/UseLotteryCanvas';
 
 const Lottery: React.FC = () => {
   const { isModalOpen, openModal, handleCancel, handleConfirm } = useLotteryModal();

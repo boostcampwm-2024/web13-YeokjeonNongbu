@@ -1,4 +1,4 @@
-export const getStepImage = (amount: number) => {
+const GetFarmImg = (amount: number) => {
   if (amount < 1000000) {
     return '/step1.png';
   } else if (amount < 10000000) {
@@ -9,3 +9,5 @@ export const getStepImage = (amount: number) => {
     return '/step4.png';
   }
 };
+
+export default GetFarmImg;

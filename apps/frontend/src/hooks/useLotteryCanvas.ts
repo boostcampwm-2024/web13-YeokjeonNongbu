@@ -1,7 +1,7 @@
 import { useRef, useState, useEffect } from 'react';
 import { ERASE_RADIUS, ERASE_DISTANCE, WIDTH, HEIGHT } from '@/constants/LotteryConstants';
 
-const useLotteryCanvas = () => {
+const UseLotteryCanvas = () => {
   const [isCanvasVisible, setIsCanvasVisible] = useState(false);
   const [isScratching, setIsScratching] = useState(false);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -113,4 +113,4 @@ const useLotteryCanvas = () => {
   };
 };
 
-export default useLotteryCanvas;
+export default UseLotteryCanvas;
