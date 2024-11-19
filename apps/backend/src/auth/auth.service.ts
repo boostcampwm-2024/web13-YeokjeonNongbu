@@ -1,4 +1,4 @@
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import { HttpException, HttpStatus, Inject, Injectable } from '@nestjs/common';
 import { DatabaseService } from 'src/database/database.service';
 import { SignUpDto } from './dto/signUp.dto';
 import * as bcrypt from 'bcrypt';
@@ -7,12 +7,14 @@ import { LoginDto } from './dto/login.dto';
 import { JwtService } from '@nestjs/jwt';
 import { GoogleLoginDto } from './dto/googleLogin.dto';
 import { KakaoLoginDto } from './dto/kakaoLogin.dto';
+import { RedisClientType } from 'redis';
 
 @Injectable()
 export class AuthService {
   constructor(
     private readonly databaseService: DatabaseService,
-    private readonly jwtService: JwtService
+    private readonly jwtService: JwtService,
+    @Inject('REDIS_CLIENT') private readonly redisClient: RedisClientType
   ) {}
 
   async signUp(signUpDto: SignUpDto) {
@@ -96,5 +98,19 @@ export class AuthService {
   async kakaoLogin(kakaoLoginDto: KakaoLoginDto) {
     const { email, nickname } = kakaoLoginDto;
     return this.loginWithSocialMedia(email, nickname);
+  }
+
+  async logout(token: string | undefined) {
+    if (!token) throw new HttpException('토큰이 필요합니다.', HttpStatus.BAD_REQUEST);
+
+    const decodedToken = this.jwtService.decode(token) as { exp: number };
+    if (!decodedToken || !decodedToken.exp) {
+      throw new HttpException('유효하지 않은 토큰입니다.', HttpStatus.UNAUTHORIZED);
+    }
+
+    const remainingTime = decodedToken.exp * 1000 - Date.now();
+    if (remainingTime > 0) {
+      await this.redisClient.set(`blacklist:${token}`, 'true', { PX: remainingTime });
+    }
   }
 }

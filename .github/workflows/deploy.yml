@@ -2,7 +2,8 @@ name: Deploy CI/CD 파이프라인
 on:
   push:
     branches:
-      - deploy
+      - dev
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -52,11 +53,5 @@ jobs:
             echo "Removing existing container..."
             docker rm myapp || true
 
-            echo "Writing .env file to apps/backend..."
-            mkdir -p apps/backend
-            cat <<EOF > apps/backend/.env
-            ${{ secrets.ENV_FILE }}
-            EOF
-
             echo "Running new container..."
-            docker run -d --name myapp -p 3000:3000 -p 8080:8080 ${{ secrets.DOCKER_HUB_USERNAME }}/myapp:latest
+            docker run -d --name myapp -p 3000:3000 -p 8080:8080 --env-file /root/src/config/.env ${{ secrets.DOCKER_HUB_USERNAME }}/myapp:latest

@@ -10,6 +10,9 @@ import { AuthGuard } from '@nestjs/passport';
 import { GoogleLoginDto } from './dto/googleLogin.dto';
 import { KakaoLoginDto } from './dto/kakaoLogin.dto';
 import { oauthResponseDecorator } from './decorator/oauth.decorator';
+import { JwtAuthGuard } from 'src/global/utils/jwtAuthGuard';
+import { Request } from 'express';
+import { logoutResponseDecorator } from './decorator/logout.decorator';
 
 @Controller('api/auth')
 export class AuthController {
@@ -29,6 +32,16 @@ export class AuthController {
   async login(@Body() loginDto: LoginDto) {
     const tokens = await this.authService.login(loginDto);
     return successhandler(successMessage.LOGIN_SUCCESS, tokens);
+  }
+
+  @Post('logout')
+  @UseGuards(JwtAuthGuard)
+  @ApiOperation({ summary: '로그아웃 API' })
+  @logoutResponseDecorator()
+  async logout(@Req() req: Request) {
+    const token = req.headers.authorization?.split(' ')[1];
+    await this.authService.logout(token);
+    return successhandler(successMessage.LOGOUT_SUCCESS);
   }
 
   @Get('google')

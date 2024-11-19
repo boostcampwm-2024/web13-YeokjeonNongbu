@@ -144,6 +144,9 @@ importers:
       '@types/passport-google-oauth20':
         specifier: ^2.0.16
         version: 2.0.16
+      '@types/passport-kakao':
+        specifier: ^1.0.3
+        version: 1.0.3
       '@types/pg':
         specifier: ^8.11.10
         version: 8.11.10
@@ -1766,6 +1769,12 @@ packages:
     resolution:
       {
         integrity: sha512-ayXK2CJ7uVieqhYOc6k/pIr5pcQxOLB6kBev+QUGS7oEZeTgIs1odDobXRqgfBPvXzl0wXCQHftV5220czZCPA==
+      }
+
+  '@types/passport-kakao@1.0.3':
+    resolution:
+      {
+        integrity: sha512-McK5kpeiOptvjIPkiA/QS3k82//z5JM7Y3yBLMDvEA0QMMhFMcWUHhyebL1Qy+0i0n8jS+Oe4U6xAvkU22SXXA==
       }
 
   '@types/passport-oauth2@1.4.17':
@@ -7957,6 +7966,11 @@ snapshots:
       '@types/express': 5.0.0
       '@types/passport': 1.0.17
       '@types/passport-oauth2': 1.4.17
+
+  '@types/passport-kakao@1.0.3':
+    dependencies:
+      '@types/express': 5.0.0
+      '@types/passport': 1.0.17
 
   '@types/passport-oauth2@1.4.17':
     dependencies:
