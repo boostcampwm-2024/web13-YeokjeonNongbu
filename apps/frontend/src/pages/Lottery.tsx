@@ -1,11 +1,11 @@
 import LotteryTicket from '@/components/LotteryTicket';
 import LotteryModal from '@/components/LotteryModal';
 import LotteryButtons from '@/components/LotteryButtons';
-import useLotteryModal from '@/hooks/UseLotteryModal';
-import useLotteryCanvas from '@/hooks/UseLotteryCanvas';
+import UseLotteryModal from '@/hooks/UseLotteryModal';
+import UseLotteryCanvas from '@/hooks/UseLotteryCanvas';
 
 const Lottery: React.FC = () => {
-  const { isModalOpen, openModal, handleCancel, handleConfirm } = useLotteryModal();
+  const { isModalOpen, openModal, handleCancel, handleConfirm } = UseLotteryModal();
   const {
     isCanvasVisible,
     isScratching,
@@ -13,7 +13,7 @@ const Lottery: React.FC = () => {
     resetLottery,
     setIsCanvasVisible,
     setIsScratching
-  } = useLotteryCanvas();
+  } = UseLotteryCanvas();
 
   const canvasOpen = () => {
     setIsCanvasVisible(true);
