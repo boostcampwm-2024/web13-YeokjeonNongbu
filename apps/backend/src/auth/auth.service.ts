@@ -1,4 +1,4 @@
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import { HttpException, HttpStatus, Inject, Injectable } from '@nestjs/common';
 import { DatabaseService } from 'src/database/database.service';
 import { SignUpDto } from './dto/signUp.dto';
 import * as bcrypt from 'bcrypt';
