@@ -1,10 +1,6 @@
 import { applyDecorators } from '@nestjs/common';
 import { ApiResponse } from '@nestjs/swagger';
-import {
-  LogoutFailure400ResponseDto,
-  LogoutFailure401ResponseDto,
-  LogoutSuccessResponseDto
-} from '../dto/logout.dto';
+import { LogoutSuccessResponseDto } from '../dto/logout.dto';
 
 export function logoutResponseDecorator() {
   return applyDecorators(
@@ -15,13 +11,37 @@ export function logoutResponseDecorator() {
     }),
     ApiResponse({
       status: 400,
-      description: '토큰 없음',
-      type: LogoutFailure400ResponseDto
+      description: '로그아웃 실패 - 토큰 없음 오류',
+      content: {
+        'application/json': {
+          examples: {
+            noToken: {
+              summary: '토큰 없음',
+              value: {
+                code: 400,
+                message: '토큰이 필요합니다.'
+              }
+            }
+          }
+        }
+      }
     }),
     ApiResponse({
       status: 401,
-      description: '만료된 토큰',
-      type: LogoutFailure401ResponseDto
+      description: '로그아웃 실패 - 인증 오류',
+      content: {
+        'application/json': {
+          examples: {
+            expiredToken: {
+              summary: '만료된 토큰',
+              value: {
+                code: 401,
+                message: '유효하지 않은 토큰입니다.'
+              }
+            }
+          }
+        }
+      }
     })
   );
 }

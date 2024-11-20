@@ -28,7 +28,7 @@ export class SignUpSuccessResponseDto {
   code: number;
 
   @ApiProperty({
-    description: '응답 메세지',
+    description: '응답 메시지',
     example: '회원 가입되었습니다.'
   })
   message: string;
@@ -42,7 +42,7 @@ export class SignUpFailureResponseDto {
   code: number;
 
   @ApiProperty({
-    description: '응답 메세지',
+    description: '응답 메시지',
     example: '유효한 이메일 주소를 입력해주세요.'
   })
   message: string;

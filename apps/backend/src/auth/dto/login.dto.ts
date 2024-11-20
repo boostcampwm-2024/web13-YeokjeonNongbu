@@ -47,31 +47,3 @@ export class LoginSuccessResponseDto {
   })
   data: LoginDataDto;
 }
-
-export class LoginFailure400ResponseDto {
-  @ApiProperty({
-    description: '응답 코드',
-    example: 400
-  })
-  code: number;
-
-  @ApiProperty({
-    description: '응답 메세지',
-    example: '유효한 이메일 주소를 입력해주세요. || 닉네임은 2자에서 10자 사이로 입력해주세요.'
-  })
-  message: string;
-}
-
-export class LoginFailure401ResponseDto {
-  @ApiProperty({
-    description: '응답 코드',
-    example: 401
-  })
-  code: number;
-
-  @ApiProperty({
-    description: '응답 메세지',
-    example: '이메일 또는 비밀번호가 올바르지 않습니다.'
-  })
-  message: string;
-}
