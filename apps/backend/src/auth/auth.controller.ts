@@ -4,7 +4,7 @@ import { SignUpDto } from './dto/signUp.dto';
 import { successhandler, successMessage } from 'src/global/successhandler';
 import { ApiOperation } from '@nestjs/swagger';
 import { LoginDto } from './dto/login.dto';
-import { signUpResponseDecorator } from './decorator/signup.decorator';
+import { signUpResponseDecorator } from './decorator/signUp.decorator';
 import { loginResponseDecorator } from './decorator/login.decorator';
 import { AuthGuard } from '@nestjs/passport';
 import { GoogleLoginDto } from './dto/googleLogin.dto';
