@@ -5,13 +5,13 @@ import { MarketService } from './market.service';
 export class MarketController {
   constructor(private readonly marketService: MarketService) {}
 
-  @Get(':crop/price')
-  getPrice(@Param('crop') crop: string) {
+  @Get('price/:crop')
+  async getPrice(@Param('crop') crop: number) {
     return this.marketService.getCropPrice(crop);
   }
 
   @Get('crop/prices')
-  getAllPrices() {
+  async getAllPrices() {
     return this.marketService.getAllCropPrices();
   }
 }
