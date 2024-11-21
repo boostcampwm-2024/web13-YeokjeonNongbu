@@ -3,9 +3,9 @@ import { OrderService } from './order.service';
 import { OrderBookService } from './orderBook.service';
 import DtoTransformer from './utils/dtoTransformer';
 import { LimitOrderDto } from './dto/limitOrder.dto';
-import { ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { ApiOperation } from '@nestjs/swagger';
 import { MatchingService } from './matching.service';
-import { OrderDto } from './dto/order.dto';
+import { successhandler, successMessage } from '../global/successhandler';
 
 @Controller('api/order')
 export class OrderController {
@@ -17,7 +17,6 @@ export class OrderController {
 
   @Post('buy/limit')
   @ApiOperation({ summary: '구매 주문 생성' })
-  @ApiResponse({ status: 200, description: '구매 주문이 성공적으로 생성되었습니다.' })
   async createBuyOrder(@Body() limitOrderDto: LimitOrderDto): Promise<string> {
     const orderDto = DtoTransformer.toOrderDto(limitOrderDto);
     await this.orderService.saveOrder(orderDto);
@@ -27,7 +26,6 @@ export class OrderController {
 
   @Post('sell/limit')
   @ApiOperation({ summary: '판매 주문 생성' })
-  @ApiResponse({ status: 200, description: '판매 주문이 성공적으로 생성되었습니다.' })
   async createSellOrder(@Body() limitOrderDto: LimitOrderDto): Promise<string> {
     const orderDto = DtoTransformer.toOrderDto(limitOrderDto);
     await this.orderService.saveOrder(orderDto);
@@ -37,8 +35,9 @@ export class OrderController {
 
   @Get('')
   @ApiOperation({ summary: '각 회원 체결 내역 조회' })
-  async getTransactionsByMemberId(@Query('memberId') memberId: number): Promise<OrderDto[]> {
-    return await this.orderBookService.getTransactionsByMemberId(memberId);
+  async getTransactionsByMemberId(@Query('memberId') memberId: number) {
+    const transactions = await this.orderBookService.getTransactionsByMemberId(memberId);
+    return successhandler(successMessage.GET_TRANSACTION_SUCCESS, transactions);
   }
 
   @Post('cancel')
