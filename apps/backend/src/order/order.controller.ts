@@ -17,20 +17,20 @@ export class OrderController {
 
   @Post('buy/limit')
   @ApiOperation({ summary: '구매 주문 생성' })
-  async createBuyOrder(@Body() limitOrderDto: LimitOrderDto): Promise<string> {
+  async createBuyOrder(@Body() limitOrderDto: LimitOrderDto) {
     const orderDto = DtoTransformer.toOrderDto(limitOrderDto);
     await this.orderService.saveOrder(orderDto);
     await this.machineService.matchOrders(limitOrderDto.cropId);
-    return '구매 주문이 성공적으로 생성되었습니다.';
+    return successhandler(successMessage.CREATE_ORDER_SUCCESS);
   }
 
   @Post('sell/limit')
   @ApiOperation({ summary: '판매 주문 생성' })
-  async createSellOrder(@Body() limitOrderDto: LimitOrderDto): Promise<string> {
+  async createSellOrder(@Body() limitOrderDto: LimitOrderDto) {
     const orderDto = DtoTransformer.toOrderDto(limitOrderDto);
     await this.orderService.saveOrder(orderDto);
     await this.machineService.matchOrders(limitOrderDto.cropId);
-    return '판매 주문이 성공적으로 생성되었습니다.';
+    return successhandler(successMessage.CREATE_ORDER_SUCCESS);
   }
 
   @Get('')
@@ -41,11 +41,12 @@ export class OrderController {
   }
 
   @Post('cancel')
+  @ApiOperation({ summary: '주문 취소' })
   async cancelOrder(
     @Body()
     { cropId, orderId, orderType }: { cropId: number; orderId: number; orderType: 'buy' | 'sell' }
-  ): Promise<string> {
+  ) {
     await this.orderBookService.removeOrder(cropId, orderId, orderType);
-    return '주문이 성공적으로 취소되었습니다.';
+    return successhandler(successMessage.DELETE_ORDER_SUCCESS);
   }
 }
