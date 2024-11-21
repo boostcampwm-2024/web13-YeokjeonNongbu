@@ -16,6 +16,12 @@ export class LoginDto {
 
 export class LoginDataDto {
   @ApiProperty({
+    description: '닉네임',
+    example: '홍길동'
+  })
+  nickname: string;
+
+  @ApiProperty({
     description: 'Access Token',
     example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'
   })

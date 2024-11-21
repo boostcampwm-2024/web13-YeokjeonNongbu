@@ -5,7 +5,7 @@ module.exports = {
       colors: {
         // 밝은 색 계열
         'bg-color': '#FFFBE6',
-        'light-grey': '#FEFEFE',
+        'light-gray': '#FEFEFE',
         'light-beige': '#FFFEF6',
         'light-red': '#FFDEDE',
         'light-yellow': '#FDD692',
@@ -24,8 +24,8 @@ module.exports = {
         'brown-light': '#A9644C',
 
         // 회색 계열
-        'blue-grey': '#64748B',
-        grey: '#C9C9C9',
+        'blue-gray': '#64748B',
+        gray: '#C9C9C9',
 
         // 기타 색상
         black: '#000000',

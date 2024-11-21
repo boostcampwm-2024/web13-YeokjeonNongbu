@@ -38,7 +38,7 @@ export class MailService {
     return userSubject.asObservable().pipe(map(message => ({ data: message })));
   }
 
-  @OnEvent('sendAlarmObs')
+  @OnEvent('sendAlarm')
   handleAlarmEventObs(memberId: string) {
     const userSubject = this.sseSubjects.get(memberId);
 

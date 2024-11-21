@@ -1,20 +1,18 @@
 import { Module } from '@nestjs/common';
-import { MailController } from './mail.controller';
-import { MailService } from './mail.service';
 import { DatabaseModule } from 'src/database/database.module';
-import { EventEmitterModule } from '@nestjs/event-emitter';
 import { JwtModule } from '@nestjs/jwt';
+import { LottoController } from './lotto.controller';
+import { LottoService } from './lotto.service';
 
 @Module({
   imports: [
     DatabaseModule,
-    EventEmitterModule.forRoot(),
     JwtModule.register({
       secret: 'web13',
       signOptions: { expiresIn: '1h' }
     })
   ],
-  controllers: [MailController],
-  providers: [MailService]
+  controllers: [LottoController],
+  providers: [LottoService]
 })
-export class MailModule {}
+export class LottoModule {}

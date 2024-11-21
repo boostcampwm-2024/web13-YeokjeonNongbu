@@ -12,13 +12,13 @@ const LotteryModal: React.FC<LotteryModalProps> = ({ handleCancel, canvasOpen })
         <div className="flex flex-row justify-end gap-4">
           <button
             onClick={handleCancel}
-            className="p-2 bg-coral text-light-grey rounded-lg min-w-[200px] min-h-[45px]"
+            className="p-2 bg-coral text-light-gray rounded-lg min-w-[200px] min-h-[45px]"
           >
             취소
           </button>
           <button
             onClick={canvasOpen}
-            className="p-2 bg-brown-dark text-light-grey rounded-lg min-w-[200px] min-h-[45px]"
+            className="p-2 bg-brown-dark text-light-gray rounded-lg min-w-[200px] min-h-[45px]"
           >
             확인
           </button>

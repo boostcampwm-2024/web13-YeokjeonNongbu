@@ -15,7 +15,7 @@ const LotteryButtons: React.FC<LotteryButtonsProps> = ({
     {!isScratching && !isCanvasVisible && (
       <button
         onClick={openModal}
-        className="p-2 bg-brown-dark text-light-grey rounded-lg shadow-lg min-w-[250px] min-h-[50px]"
+        className="p-2 bg-brown-dark text-light-gray rounded-lg shadow-lg min-w-[250px] min-h-[50px]"
       >
         복권긁기
       </button>
@@ -23,7 +23,7 @@ const LotteryButtons: React.FC<LotteryButtonsProps> = ({
     {!isScratching && isCanvasVisible && (
       <button
         onClick={resetLottery}
-        className="p-2 bg-brown-dark text-light-grey rounded-lg shadow-lg min-w-[250px] min-h-[50px]"
+        className="p-2 bg-brown-dark text-light-gray rounded-lg shadow-lg min-w-[250px] min-h-[50px]"
       >
         또 긁으러 가기
       </button>
