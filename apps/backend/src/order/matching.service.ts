@@ -13,8 +13,8 @@ export class MatchingService {
   ) {}
 
   async matchOrders(cropId: number): Promise<void> {
-    const buyOrders = await this.orderBookService.getBuyOrders(cropId);
-    const sellOrders = await this.orderBookService.getSellOrders(cropId);
+    const buyOrders = await this.orderBookService.getBuyOrdersFromRedis(cropId);
+    const sellOrders = await this.orderBookService.getSellOrdersFromRedis(cropId);
 
     let sellIndex = 0;
     let buyIndex = 0;
@@ -38,20 +38,37 @@ export class MatchingService {
       // 이후 트랜잭션 적용 및 분리 예정
 
       // 1. 주문 DB 업데이트
+      if (sellOrder.unfilledQuantity <= matchedQuantity) {
+        await this.orderService.updateOrder(
+          sellOrder.orderId,
+          OrderStatus.COMPLETED,
+          matchedQuantity,
+          sellOrder.unfilledQuantity - matchedQuantity
+        );
+      } else if (sellOrder.unfilledQuantity > matchedQuantity) {
+        await this.orderService.updateOrder(
+          sellOrder.orderId,
+          OrderStatus.PARTIALLY_FILLED,
+          matchedQuantity,
+          sellOrder.unfilledQuantity - matchedQuantity
+        );
+      }
 
-      await this.orderService.updateOrder(
-        sellOrder.orderId,
-        OrderStatus.PARTIALLY_FILLED,
-        matchedQuantity,
-        sellOrder.unfilledQuantity - matchedQuantity
-      );
-
-      await this.orderService.updateOrder(
-        buyOrder.orderId,
-        OrderStatus.PARTIALLY_FILLED,
-        matchedQuantity,
-        buyOrder.unfilledQuantity - matchedQuantity
-      );
+      if (buyOrder.unfilledQuantity <= matchedQuantity) {
+        await this.orderService.updateOrder(
+          buyOrder.orderId,
+          OrderStatus.COMPLETED,
+          matchedQuantity,
+          buyOrder.unfilledQuantity - matchedQuantity
+        );
+      } else if (buyOrder.unfilledQuantity > matchedQuantity) {
+        await this.orderService.updateOrder(
+          buyOrder.orderId,
+          OrderStatus.PARTIALLY_FILLED,
+          matchedQuantity,
+          buyOrder.unfilledQuantity - matchedQuantity
+        );
+      }
 
       // 2. 체결 트랜잭션 DB 생성 및 저장
       await this.orderService.saveTransaction(sellOrder, buyOrder.price, matchedQuantity);

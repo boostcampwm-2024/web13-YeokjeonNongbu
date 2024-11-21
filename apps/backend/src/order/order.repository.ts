@@ -87,4 +87,17 @@ export class OrderRepository {
 
     await this.databaseService.query(query, values);
   }
+
+  async getTransactionsByMemberId(memberId: number): Promise<OrderDto[]> {
+    const query = `
+            SELECT *
+            FROM transactions
+            WHERE member_id = $1
+        `;
+
+    const values = [memberId];
+
+    const result = await this.databaseService.query(query, values);
+    return result.rows;
+  }
 }

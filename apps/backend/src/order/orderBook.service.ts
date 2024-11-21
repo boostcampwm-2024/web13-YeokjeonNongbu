@@ -2,37 +2,20 @@ import { Inject, Injectable } from '@nestjs/common';
 import { RedisClientType } from 'redis';
 import { OrderBookDto } from './dto/orderBook.dto';
 import { OrderType } from './enums/orderType';
+import { OrderRepository } from './order.repository';
+import { OrderDto } from './dto/order.dto';
 
 @Injectable()
 export class OrderBookService {
-  constructor(@Inject('REDIS_CLIENT') private readonly redisClient: RedisClientType) {}
+  constructor(
+    @Inject('REDIS_CLIENT') private readonly redisClient: RedisClientType,
+    private readonly repository: OrderRepository
+  ) {}
 
   async addOrder(order: OrderBookDto): Promise<void> {
     const orderKey = `orderBook:${order.cropId}:${order.orderType}`;
     const orderData = this.serializeOrder(order);
     await this.redisClient.zAdd(orderKey, { score: order.price, value: orderData });
-  }
-
-  async getBuyOrders(cropId: number): Promise<OrderBookDto[]> {
-    const orderKey = `orderBook:${cropId}:buy`;
-    const orders = await this.redisClient.zRange(orderKey, 0, -1, { REV: true });
-    return orders.map((order: string) => this.deserializeOrder(order));
-  }
-
-  async getSellOrders(cropId: number): Promise<OrderBookDto[]> {
-    const orderKey = `orderBook:${cropId}:sell`;
-    const orders = await this.redisClient.zRange(orderKey, 0, -1);
-    return orders.map((order: string) => this.deserializeOrder(order));
-  }
-
-  async removeOrder(cropId: number, orderId: number, orderType: 'buy' | 'sell'): Promise<void> {
-    const orderKey = `orderBook:${cropId}:${orderType}`;
-    const orders = await this.redisClient.zRange(orderKey, 0, -1);
-
-    const orderToRemove = orders.find(order => this.deserializeOrder(order).orderId === orderId);
-    if (orderToRemove) {
-      await this.redisClient.zRem(orderKey, orderToRemove);
-    }
   }
 
   async updateOrder(
@@ -43,8 +26,8 @@ export class OrderBookService {
   ): Promise<void> {
     const orders =
       orderType === OrderType.BUY
-        ? await this.getBuyOrders(cropId)
-        : await this.getSellOrders(cropId);
+        ? await this.getBuyOrdersFromRedis(cropId)
+        : await this.getSellOrdersFromRedis(cropId);
     const targetOrder = orders.find(order => order.orderId === orderId);
 
     if (!targetOrder) {
@@ -57,6 +40,32 @@ export class OrderBookService {
     if (targetOrder.unfilledQuantity > 0) {
       await this.addOrder(targetOrder);
     }
+  }
+
+  async removeOrder(cropId: number, orderId: number, orderType: 'buy' | 'sell'): Promise<void> {
+    const orderKey = `orderBook:${cropId}:${orderType}`;
+    const orders = await this.redisClient.zRange(orderKey, 0, -1);
+
+    const orderToRemove = orders.find(order => this.deserializeOrder(order).orderId === orderId);
+    if (orderToRemove) {
+      await this.redisClient.zRem(orderKey, orderToRemove);
+    }
+  }
+
+  async getTransactionsByMemberId(memberId: number): Promise<OrderDto[]> {
+    return await this.repository.getTransactionsByMemberId(memberId);
+  }
+
+  async getBuyOrdersFromRedis(cropId: number): Promise<OrderBookDto[]> {
+    const orderKey = `orderBook:${cropId}:sell`;
+    const orders = await this.redisClient.zRange(orderKey, 0, -1);
+    return orders.map((order: string) => this.deserializeOrder(order));
+  }
+
+  async getSellOrdersFromRedis(cropId: number): Promise<OrderBookDto[]> {
+    const orderKey = `orderBook:${cropId}:sell`;
+    const orders = await this.redisClient.zRange(orderKey, 0, -1);
+    return orders.map((order: string) => this.deserializeOrder(order));
   }
 
   private serializeOrder(order: OrderBookDto): string {
