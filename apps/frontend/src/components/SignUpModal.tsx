@@ -99,7 +99,7 @@ const SignUpModal: React.FC<SignUpModalProps> = ({ step, setModalStep }) => {
           </div>
           {errorMessage && <div className="text-sm text-red-600 mb-4">{errorMessage}</div>}
           <button
-            className="mt-4 p-2 bg-brown-dark text-light-grey rounded-lg min-w-[300px] min-h-[40px]"
+            className="mt-4 p-2 bg-brown-dark text-light-gray rounded-lg min-w-[300px] min-h-[40px]"
             onClick={handleSign1}
           >
             다음
@@ -122,7 +122,7 @@ const SignUpModal: React.FC<SignUpModalProps> = ({ step, setModalStep }) => {
           </div>
           {errorMessage && <div className="my-2 text-sm text-red-600">{errorMessage}</div>}
           <button
-            className="mt-2 p-2 bg-brown-dark text-light-grey rounded-lg min-w-[300px] min-h-[40px]"
+            className="mt-2 p-2 bg-brown-dark text-light-gray rounded-lg min-w-[300px] min-h-[40px]"
             onClick={handleSign2}
           >
             회원가입

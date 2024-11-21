@@ -8,6 +8,7 @@ import { JwtService } from '@nestjs/jwt';
 import { GoogleLoginDto } from './dto/googleLogin.dto';
 import { KakaoLoginDto } from './dto/kakaoLogin.dto';
 import { RedisClientType } from 'redis';
+import { Nullable, Optional } from 'src/global/utils/dataCustomType';
 
 @Injectable()
 export class AuthService {
@@ -58,33 +59,34 @@ export class AuthService {
       throw new HttpException('이메일 또는 비밀번호가 올바르지 않습니다.', HttpStatus.UNAUTHORIZED);
 
     const isPasswordValid = await bcrypt.compare(password, member.rows[0].password);
-    if (!isPasswordValid) {
+    if (!isPasswordValid)
       throw new HttpException('이메일 또는 비밀번호가 올바르지 않습니다.', HttpStatus.UNAUTHORIZED);
-    }
 
-    const payload = {
-      memberId: member.rows[0].member_id,
-      email,
-      nickname: member.rows[0].nickname
-    };
-    const accessToken = this.jwtService.sign(payload, { expiresIn: '1h' });
-    const refreshToken = this.jwtService.sign(payload, { expiresIn: '7d' });
-    return { accessToken, refreshToken };
+    const nickname = member.rows[0].nickname;
+    const { accessToken, refreshToken } = await this.generateTokens(member.rows[0].member_id);
+    return { nickname, accessToken, refreshToken };
   }
 
-  async loginWithSocialMedia(email: string, nickname: string) {
+  private async verifyUser(email: string, nickname: string) {
     const existingUser = await this.databaseService.query(authQueries.findByEmailQuery, [email]);
-
-    if (!existingUser) {
-      const hashedPassword = await bcrypt.hash('default', 10);
-      await this.databaseService.query(authQueries.signUpQuery, [email, hashedPassword, nickname]);
-    }
-    const member = await this.databaseService.query(authQueries.findByEmailQuery, [email]);
-    const payload = {
-      memberId: member.rows[0].member_id,
+    if (existingUser?.rows?.length) return existingUser.rows[0];
+    const hashedPassword = await bcrypt.hash('default', 10);
+    const newMember = await this.databaseService.query(authQueries.signUpQuery, [
       email,
-      nickname: member.rows[0].nickname
-    };
+      hashedPassword,
+      nickname
+    ]);
+    return newMember.rows[0];
+  }
+
+  async SocialLogin(email: string, nickname: string) {
+    const member = await this.verifyUser(email, nickname);
+    const { accessToken, refreshToken } = await this.generateTokens(member.rows[0].member_id);
+    return { nickname, accessToken, refreshToken };
+  }
+
+  private async generateTokens(memberId: number) {
+    const payload = { memberId };
     const accessToken = this.jwtService.sign(payload, { expiresIn: '1h' });
     const refreshToken = this.jwtService.sign(payload, { expiresIn: '7d' });
     return { accessToken, refreshToken };
@@ -92,25 +94,33 @@ export class AuthService {
 
   async googleLogin(googleLoginDto: GoogleLoginDto) {
     const { email, name } = googleLoginDto;
-    return this.loginWithSocialMedia(email, name);
+    return this.SocialLogin(email, name);
   }
 
   async kakaoLogin(kakaoLoginDto: KakaoLoginDto) {
     const { email, nickname } = kakaoLoginDto;
-    return this.loginWithSocialMedia(email, nickname);
+    return this.SocialLogin(email, nickname);
   }
 
-  async logout(token: string | undefined) {
+  async logout(token: Optional<string>) {
     if (!token) throw new HttpException('토큰이 필요합니다.', HttpStatus.BAD_REQUEST);
 
     const decodedToken = this.jwtService.decode(token) as { exp: number };
-    if (!decodedToken || !decodedToken.exp) {
+    if (!decodedToken || !decodedToken.exp)
       throw new HttpException('유효하지 않은 토큰입니다.', HttpStatus.UNAUTHORIZED);
-    }
 
     const remainingTime = decodedToken.exp * 1000 - Date.now();
-    if (remainingTime > 0) {
+    if (remainingTime > 0)
       await this.redisClient.set(`blacklist:${token}`, 'true', { PX: remainingTime });
-    }
+  }
+
+  async updateIntroduce(memberId: number, introduce: Nullable<string>) {
+    await this.databaseService.query(authQueries.updateInroduceQuery, [introduce, memberId]);
+  }
+
+  async updateNickname(memberId: number, nickname: Nullable<string>) {
+    if (!nickname || nickname.length < 2 || nickname.length > 10)
+      throw new HttpException('닉네임은 2자에서 10자 사이로 입력해주세요.', HttpStatus.BAD_REQUEST);
+    await this.databaseService.query(authQueries.updateNicknameQuery, [nickname, memberId]);
   }
 }

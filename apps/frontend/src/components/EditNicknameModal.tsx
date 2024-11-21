@@ -51,7 +51,7 @@ const EditNicknameModal: React.FC<EditNicknameModalProps> = ({ isOpen, id, setId
           <div className="flex flex-row justify-end gap-4 mt-8">
             <button
               onClick={handleNicknameChange}
-              className="p-2 bg-brown-dark text-light-grey rounded-lg min-w-[180px] min-h-[40px]"
+              className="p-2 bg-brown-dark text-light-gray rounded-lg min-w-[180px] min-h-[40px]"
             >
               확인
             </button>

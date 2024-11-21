@@ -1,15 +1,15 @@
 import { applyDecorators } from '@nestjs/common';
 import { ApiResponse } from '@nestjs/swagger';
-import { LogoutSuccessResponseDto } from '../dto/logout.dto';
 import { TokenDecorator } from 'src/global/utils/tokenSwagger';
+import { UpdateIntroduceSuccessResponseDto } from '../dto/updateIntroduce.dto';
 
-export function logoutResponseDecorator() {
+export function updateIntroduceResponseDecorator() {
   return applyDecorators(
     TokenDecorator(),
     ApiResponse({
       status: 200,
-      description: '로그아웃 성공',
-      type: LogoutSuccessResponseDto
+      description: '소개글 수정 성공',
+      type: UpdateIntroduceSuccessResponseDto
     })
   );
 }

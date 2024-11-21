@@ -15,25 +15,25 @@ const Main: React.FC = () => {
           <li>
             <Link to="/cropmarket" className="flex flex-col items-center">
               <div className="bg-cropmarket bg-no-repeat bg-contain w-[90px] h-[90px]" />
-              <p className="text-base font-bold text-light-grey text-shadow">작물시장</p>
+              <p className="text-base font-bold text-light-gray text-shadow">작물시장</p>
             </Link>
           </li>
           <li>
             <Link to="/mypage" className="flex flex-col items-center">
               <div className="bg-mypage bg-no-repeat bg-contain w-[90px] h-[90px]" />
-              <p className="text-base font-bold text-light-grey text-shadow">마이페이지</p>
+              <p className="text-base font-bold text-light-gray text-shadow">마이페이지</p>
             </Link>
           </li>
           <li>
             <Link to="/ranking" className="flex flex-col items-center">
               <div className="bg-ranking bg-no-repeat bg-contain w-[80px] h-[100px]" />
-              <p className="text-base font-bold text-light-grey text-shadow">랭킹</p>
+              <p className="text-base font-bold text-light-gray text-shadow">랭킹</p>
             </Link>
           </li>
           <li>
             <Link to="/lottery" className="flex flex-col items-center">
               <div className="bg-lottery bg-no-repeat bg-contain w-[90px] h-[90px]" />
-              <p className="text-base font-bold text-light-grey text-shadow">복권</p>
+              <p className="text-base font-bold text-light-gray text-shadow">복권</p>
             </Link>
           </li>
         </ul>

@@ -57,7 +57,7 @@ const LoginModal: React.FC<LoginProps> = ({ setModalStep }) => {
       {errorMessage && <div className="text-sm text-red-600 mb-4">{errorMessage}</div>}
 
       <button
-        className="m-2 p-2 bg-brown-dark text-light-grey rounded-lg min-w-[300px] min-h-[40px]"
+        className="m-2 p-2 bg-brown-dark text-light-gray rounded-lg min-w-[300px] min-h-[40px]"
         onClick={handleLogin}
       >
         로그인

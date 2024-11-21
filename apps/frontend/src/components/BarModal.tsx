@@ -14,11 +14,11 @@ const BarModal: React.FC<barProps> = ({ isOpen, closeModal }) => {
         <Link
           to="/MyPage"
           onClick={closeModal}
-          className="text-lg font-bold text-light-grey text-shadow mb-2"
+          className="text-lg font-bold text-light-gray text-shadow mb-2"
         >
           마이페이지
         </Link>
-        <Link to="/" onClick={closeModal} className="text-lg font-bold text-light-grey text-shadow">
+        <Link to="/" onClick={closeModal} className="text-lg font-bold text-light-gray text-shadow">
           로그아웃
         </Link>
       </div>
