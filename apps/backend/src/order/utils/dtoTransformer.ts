@@ -4,12 +4,16 @@ import { LimitOrderDto } from '../dto/limitOrder.dto';
 import { OrderStatus } from '../enums/orderType';
 
 export default class DtoTransformer {
-  static toOrderBookDto(order: OrderDto, orderId: number): OrderBookDto {
+  static toOrderBookDto(order: OrderDto, orderId: number, memberId: number): OrderBookDto {
     return {
       orderId,
+      memberId,
       cropId: order.cropId,
       orderType: order.orderType,
+      tradingType: order.tradingType,
       price: order.price,
+      quantity: order.quantity,
+      filledQuantity: order.filledQuantity,
       unfilledQuantity: order.quantity,
       time: order.time
     };

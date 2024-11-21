@@ -1,4 +1,4 @@
 export interface CropPrice {
-  crop: string;
+  crop: number;
   price: number;
 }
