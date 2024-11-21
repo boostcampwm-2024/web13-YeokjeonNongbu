@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import GetFarmImg from '@/utils/GetFarmImg';
+import { getStepImage } from '@/utils/GetFarmImg';
 
 const Main: React.FC = () => {
   const amount: number = 100000000;
@@ -8,7 +8,7 @@ const Main: React.FC = () => {
     <main className="flex flex-col justify-center items-center select-none min-h-screen">
       <div
         className="flex justify-center items-center bg-no-repeat bg-contain bg-center w-[370px] h-[360px]"
-        style={{ backgroundImage: `url(${GetFarmImg(amount)})` }}
+        style={{ backgroundImage: `url(${getStepImage(amount)})` }}
       ></div>
       <nav className="flex justify-center mt-8">
         <ul className="flex list-none gap-24">

@@ -47,9 +47,7 @@ module.exports = {
         ranking: "url('./assets/main/ranking.png')",
         lottery: "url('./assets/main/lottery.png')",
         giftBox: "url('./assets/lottery/giftBox.png')",
-        veggieBox: "url('./assets/lottery/veggieBox.png')",
-        board1: "url('./assets/market/board1.png')",
-        board2: "url('./assets/market/board2.png')"
+        veggieBox: "url('./assets/lottery/veggieBox.png')"
       },
       keyframes: {
         slideDown: {
