@@ -5,12 +5,14 @@ import { OrderBookDto } from './dto/orderBook.dto';
 import DtoTransformer from './utils/dtoTransformer';
 import { LimitOrderDto } from './dto/limitOrder.dto';
 import { ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { MatchingService } from './matching.service';
 
 @Controller('api/order')
 export class OrderController {
   constructor(
     private readonly orderService: OrderService,
-    private readonly orderBookService: OrderBookService
+    private readonly orderBookService: OrderBookService,
+    private readonly machineService: MatchingService
   ) {}
 
   @Post('buy')
@@ -18,9 +20,8 @@ export class OrderController {
   @ApiResponse({ status: 200, description: '구매 주문이 성공적으로 생성되었습니다.' })
   async createBuyOrder(@Body() limitOrderDto: LimitOrderDto): Promise<string> {
     const orderDto = DtoTransformer.toOrderDto(limitOrderDto);
-    const orderId = await this.orderService.saveOrder(orderDto);
-
-    await this.orderService.saveOrderToOrderBook(orderDto, orderId);
+    await this.orderService.saveOrder(orderDto);
+    await this.machineService.matchOrders(limitOrderDto.cropId);
     return '구매 주문이 성공적으로 생성되었습니다.';
   }
 
@@ -29,9 +30,8 @@ export class OrderController {
   @ApiResponse({ status: 200, description: '판매 주문이 성공적으로 생성되었습니다.' })
   async createSellOrder(@Body() limitOrderDto: LimitOrderDto): Promise<string> {
     const orderDto = DtoTransformer.toOrderDto(limitOrderDto);
-    const orderId = await this.orderService.saveOrder(orderDto);
-
-    await this.orderService.saveOrderToOrderBook(orderDto, orderId);
+    await this.orderService.saveOrder(orderDto);
+    await this.machineService.matchOrders(limitOrderDto.cropId);
     return '판매 주문이 성공적으로 생성되었습니다.';
   }
 

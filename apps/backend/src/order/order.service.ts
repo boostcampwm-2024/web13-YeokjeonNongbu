@@ -4,6 +4,8 @@ import { OrderRepository } from './order.repository';
 import { OrderDto } from './dto/order.dto';
 import { LimitOrderDto } from './dto/limitOrder.dto';
 import DtoTransformer from './utils/dtoTransformer';
+import { OrderStatus } from './enums/orderType';
+import { OrderBookDto } from './dto/orderBook.dto';
 
 @Injectable()
 export class OrderService {
@@ -12,17 +14,37 @@ export class OrderService {
     private readonly orderRepository: OrderRepository
   ) {}
 
-  async saveOrder(createOrderDto: LimitOrderDto): Promise<number> {
+  async saveOrder(createOrderDto: LimitOrderDto): Promise<number[]> {
     const orderDto: OrderDto = DtoTransformer.toOrderDto(createOrderDto);
-    const orderId = await this.orderRepository.saveOrder(orderDto);
+    const [orderId, memberId] = await this.orderRepository.saveOrder(orderDto);
+    await this.saveOrderToOrderBook(orderDto, orderId, memberId);
 
-    await this.saveOrderToOrderBook(orderDto, orderId);
-
-    return orderId;
+    return [orderId, memberId];
   }
 
-  async saveOrderToOrderBook(order: OrderDto, orderId: number): Promise<void> {
-    const orderBookDto = DtoTransformer.toOrderBookDto(order, orderId);
+  private async saveOrderToOrderBook(
+    order: OrderDto,
+    orderId: number,
+    memberId: number
+  ): Promise<void> {
+    const orderBookDto = DtoTransformer.toOrderBookDto(order, orderId, memberId);
     await this.orderBookService.addOrder(orderBookDto);
+  }
+
+  async saveTransaction(
+    order: OrderBookDto,
+    price: number,
+    matchedQuantity: number
+  ): Promise<void> {
+    await this.orderRepository.saveTransaction(order, price, matchedQuantity);
+  }
+
+  async updateOrder(
+    orderId: number,
+    status: OrderStatus,
+    filledQuantity: number,
+    unfilledQuantity: number
+  ): Promise<void> {
+    await this.orderRepository.updateOrder({ orderId, status, filledQuantity, unfilledQuantity });
   }
 }
