@@ -2,7 +2,7 @@ name: Deploy CI/CD 파이프라인
 on:
   push:
     branches:
-      - dev
+      - dtest
 
 jobs:
   build:
