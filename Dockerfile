@@ -9,7 +9,7 @@ WORKDIR /app
 
 # 공통 package.json과 lock 파일을 복사 및 설치
 COPY package*.json pnpm-lock.yaml ./
-RUN pnpm install --frozen-lockfile --prod  # --prod로 프로덕션 의존성만 설치
+RUN pnpm install --no-dev
 
 # 프론트엔드 파일 복사 및 빌드
 WORKDIR /app/apps/frontend
@@ -33,9 +33,6 @@ COPY --from=builder /app/apps/frontend/dist /app/apps/frontend/dist
 COPY --from=builder /app/apps/backend/dist /app/apps/backend/dist
 COPY --from=builder /app/package.json /app/package.json
 COPY --from=builder /app/pnpm-lock.yaml /app/pnpm-lock.yaml
-
-# 불필요한 의존성 및 파일 복사하지 않기 (예: node_modules)
-# 실행 환경에서 pnpm을 전역 설치하지 않음
 
 # 프론트엔드와 백엔드 포트 노출 설정
 EXPOSE 3000 8080
