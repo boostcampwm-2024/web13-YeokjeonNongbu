@@ -8,12 +8,7 @@ export default defineConfig({
   server: {
     host: true,
     port: 3000,
-    cors: true,
-    hmr: {
-      protocol: 'wss',
-      host: 'yeokjeonnongbu.shop',
-      port: 443
-    }
+    cors: true
   },
 
   resolve: {
