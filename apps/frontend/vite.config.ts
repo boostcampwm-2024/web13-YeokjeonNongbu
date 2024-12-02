@@ -9,6 +9,10 @@ export default defineConfig({
     host: true,
     port: 3000,
     cors: true,
+    hmr: {
+      protocol: 'wss',
+      host: 'yeokjeonnongbu.shop' // 실제 도메인 이름
+    },
     proxy: {
       '/ws': {
         target: 'http://localhost:8080',
