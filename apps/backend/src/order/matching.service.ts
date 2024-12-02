@@ -89,8 +89,10 @@ export class MatchingService {
     const availableQuantity = this.calculateMarketBuyQuantity(buyOrder, sellOrder);
     const matchedAmount = availableQuantity * sellOrder.price!;
 
-    await this.updateOrderQuantities(buyOrder, sellOrder, availableQuantity, matchedAmount);
-    await this.processMatchAndUpdatePrice(cropId, buyOrder, sellOrder, availableQuantity);
+    await this.orderService.runInTransaction(async () => {
+      await this.updateOrderQuantities(buyOrder, sellOrder, availableQuantity, matchedAmount);
+      await this.processMatchAndUpdatePrice(cropId, buyOrder, sellOrder, availableQuantity);
+    });
 
     return this.updateIndexes(
       sellOrder.unfilledQuantity! <= 0,
@@ -112,8 +114,11 @@ export class MatchingService {
     }
 
     const availableQuantity = Math.min(buyOrder.unfilledQuantity!, sellOrder.quantity!);
-    await this.updateOrderQuantities(buyOrder, sellOrder, availableQuantity);
-    await this.processMatchAndUpdatePrice(cropId, buyOrder, sellOrder, availableQuantity);
+
+    await this.orderService.runInTransaction(async () => {
+      await this.updateOrderQuantities(buyOrder, sellOrder, availableQuantity);
+      await this.processMatchAndUpdatePrice(cropId, buyOrder, sellOrder, availableQuantity);
+    });
 
     return this.updateIndexes(
       sellOrder.quantity! <= 0 || availableQuantity === 0,
@@ -135,8 +140,11 @@ export class MatchingService {
     }
 
     const matchedQuantity = Math.min(sellOrder.unfilledQuantity!, buyOrder.unfilledQuantity!);
-    await this.updateOrderQuantities(buyOrder, sellOrder, matchedQuantity);
-    await this.processMatchAndUpdatePrice(cropId, buyOrder, sellOrder, matchedQuantity);
+
+    await this.orderService.runInTransaction(async () => {
+      await this.updateOrderQuantities(buyOrder, sellOrder, matchedQuantity);
+      await this.processMatchAndUpdatePrice(cropId, buyOrder, sellOrder, matchedQuantity);
+    });
 
     return this.updateIndexes(
       sellOrder.unfilledQuantity! <= 0,
@@ -209,71 +217,74 @@ export class MatchingService {
     remainingBuyOrders: OrderBookDto[],
     remainingSellOrders: OrderBookDto[]
   ): Promise<void> {
-    // 시장가 매수 주문 정리
-    for (const buyOrder of remainingBuyOrders) {
-      if (buyOrder.tradingType === TradingType.MARKET) {
-        // 매칭되지 않은 금액 롤백
-        if (buyOrder.totalAmount! > 0) {
-          await this.handlePendingRollback(
-            cropId,
-            buyOrder.memberId,
-            buyOrder.totalAmount!,
-            OrderType.BUY
-          );
+    await this.orderService.runInTransaction(async () => {
+      try {
+        // 시장가 매수 주문 정리
+        for (const buyOrder of remainingBuyOrders) {
+          if (buyOrder.tradingType === TradingType.MARKET) {
+            if (buyOrder.totalAmount! > 0) {
+              await this.handlePendingRollback(
+                cropId,
+                buyOrder.memberId,
+                buyOrder.totalAmount!,
+                OrderType.BUY
+              );
+            }
+
+            await this.orderService.updateOrder(
+              buyOrder.orderId,
+              OrderStatus.COMPLETED,
+              buyOrder.filledQuantity,
+              buyOrder.unfilledQuantity!,
+              buyOrder.tradingType
+            );
+
+            // Redis 주문 제거
+            await this.orderBookService.removeOrder(
+              buyOrder.memberId,
+              cropId,
+              buyOrder.orderId,
+              OrderType.BUY,
+              TradingType.MARKET
+            );
+          }
         }
 
-        // 주문 상태 완료 처리
-        await this.orderService.updateOrder(
-          buyOrder.orderId,
-          OrderStatus.COMPLETED,
-          buyOrder.filledQuantity,
-          buyOrder.unfilledQuantity!,
-          buyOrder.tradingType
-        );
+        // 시장가 매도 주문 정리
+        for (const sellOrder of remainingSellOrders) {
+          if (sellOrder.tradingType === TradingType.MARKET) {
+            if (sellOrder.quantity! > 0) {
+              await this.handlePendingRollback(
+                cropId,
+                sellOrder.memberId,
+                sellOrder.quantity!,
+                OrderType.SELL
+              );
+            }
 
-        // Redis 주문 제거
-        await this.orderBookService.removeOrder(
-          buyOrder.memberId,
-          cropId,
-          buyOrder.orderId,
-          OrderType.BUY,
-          TradingType.MARKET
-        );
-      }
-    }
+            await this.orderService.updateOrder(
+              sellOrder.orderId,
+              OrderStatus.COMPLETED,
+              sellOrder.filledQuantity,
+              sellOrder.unfilledQuantity!,
+              sellOrder.tradingType
+            );
 
-    // 시장가 매도 주문 정리
-    for (const sellOrder of remainingSellOrders) {
-      if (sellOrder.tradingType === TradingType.MARKET) {
-        // 매칭되지 않은 수량 롤백
-        if (sellOrder.quantity! > 0) {
-          await this.handlePendingRollback(
-            cropId,
-            sellOrder.memberId,
-            sellOrder.quantity!,
-            OrderType.SELL
-          );
+            // Redis 주문 제거
+            await this.orderBookService.removeOrder(
+              sellOrder.memberId,
+              cropId,
+              sellOrder.orderId,
+              OrderType.SELL,
+              TradingType.MARKET
+            );
+          }
         }
-
-        // 주문 상태 완료 처리
-        await this.orderService.updateOrder(
-          sellOrder.orderId,
-          OrderStatus.COMPLETED,
-          sellOrder.filledQuantity,
-          sellOrder.unfilledQuantity!,
-          sellOrder.tradingType
-        );
-
-        // Redis 주문 제거
-        await this.orderBookService.removeOrder(
-          sellOrder.memberId,
-          cropId,
-          sellOrder.orderId,
-          OrderType.SELL,
-          TradingType.MARKET
-        );
+      } catch (error) {
+        console.error('주문 정리 중 오류:', error);
+        throw new Error('주문 정리 중 오류가 발생했습니다.');
       }
-    }
+    });
   }
 
   private async processOrderMatch(
@@ -283,121 +294,125 @@ export class MatchingService {
   ): Promise<void> {
     const matchedPrice = this.determineMatchPrice(buyOrder, sellOrder);
 
-    // 주문 오더 상태 업데이트
-    await this.orderService.updateOrder(
-      sellOrder.orderId,
-      sellOrder.unfilledQuantity! > 0 || sellOrder.filledQuantity != sellOrder.quantity
-        ? OrderStatus.PARTIALLY_FILLED
-        : OrderStatus.COMPLETED,
-      sellOrder.filledQuantity,
-      sellOrder.unfilledQuantity!,
-      sellOrder.tradingType
-    );
+    await this.orderService.runInTransaction(async () => {
+      try {
+        // 주문 오더 상태 업데이트
+        await this.orderService.updateOrder(
+          sellOrder.orderId,
+          sellOrder.unfilledQuantity! > 0 || sellOrder.filledQuantity != sellOrder.quantity
+            ? OrderStatus.PARTIALLY_FILLED
+            : OrderStatus.COMPLETED,
+          sellOrder.filledQuantity,
+          sellOrder.unfilledQuantity!,
+          sellOrder.tradingType
+        );
 
-    await this.orderService.updateOrder(
-      buyOrder.orderId,
-      buyOrder.unfilledQuantity! > 0 ||
-        (buyOrder.totalAmount! > 0 && buyOrder.tradingType === TradingType.MARKET)
-        ? OrderStatus.PARTIALLY_FILLED
-        : OrderStatus.COMPLETED,
-      buyOrder.filledQuantity,
-      buyOrder.unfilledQuantity!,
-      buyOrder.tradingType
-    );
+        await this.orderService.updateOrder(
+          buyOrder.orderId,
+          buyOrder.unfilledQuantity! > 0 ||
+            (buyOrder.totalAmount! > 0 && buyOrder.tradingType === TradingType.MARKET)
+            ? OrderStatus.PARTIALLY_FILLED
+            : OrderStatus.COMPLETED,
+          buyOrder.filledQuantity,
+          buyOrder.unfilledQuantity!,
+          buyOrder.tradingType
+        );
 
-    // 트랜잭션 저장
-    if (matchedQuantity > 0) {
-      await this.orderService.saveTransaction(sellOrder, matchedPrice, matchedQuantity);
-      await this.orderService.saveTransaction(buyOrder, matchedPrice, matchedQuantity);
-    }
+        // 트랜잭션 저장
+        if (matchedQuantity > 0) {
+          await this.orderService.saveTransaction(sellOrder, matchedPrice, matchedQuantity);
+          await this.orderService.saveTransaction(buyOrder, matchedPrice, matchedQuantity);
+        }
 
-    // 캐시 및 작물 데이터 업데이트
-    await this.accountService.updateCashByCompletingOrder(
-      sellOrder.memberId,
-      matchedPrice * matchedQuantity,
-      OrderType.SELL
-    );
-    await this.accountService.updateCashByCompletingOrder(
-      buyOrder.memberId,
-      buyOrder.tradingType != TradingType.MARKET && buyOrder.price != matchedPrice
-        ? buyOrder.price! * matchedQuantity
-        : matchedPrice * matchedQuantity,
-      OrderType.BUY
-    );
-    await this.accountService.updateCropByCompletingSellOrder(
-      sellOrder.memberId,
-      sellOrder.cropId,
-      matchedQuantity
-    );
-    await this.accountService.updateCropByCompletingBuyOrder(
-      buyOrder.memberId,
-      buyOrder.cropId,
-      matchedQuantity
-    );
+        // 캐시 및 작물 데이터 업데이트
+        await this.accountService.updateCashByCompletingOrder(
+          sellOrder.memberId,
+          matchedPrice * matchedQuantity,
+          OrderType.SELL
+        );
+        await this.accountService.updateCashByCompletingOrder(
+          buyOrder.memberId,
+          buyOrder.tradingType != TradingType.MARKET && buyOrder.price != matchedPrice
+            ? buyOrder.price! * matchedQuantity
+            : matchedPrice * matchedQuantity,
+          OrderType.BUY
+        );
+        await this.accountService.updateCropByCompletingSellOrder(
+          sellOrder.memberId,
+          sellOrder.cropId,
+          matchedQuantity
+        );
+        await this.accountService.updateCropByCompletingBuyOrder(
+          buyOrder.memberId,
+          buyOrder.cropId,
+          matchedQuantity
+        );
 
-    // 체결 이벤트 알림 전달
+        // 체결 이벤트 알림 전달
+        await this.mailService.createMailByOtherService(
+          buyOrder.memberId,
+          1,
+          buyOrder.cropId,
+          matchedPrice,
+          matchedQuantity,
+          null
+        );
 
-    // 매수자 알림 생성
-    await this.mailService.createMailByOtherService(
-      buyOrder.memberId,
-      1,
-      buyOrder.cropId,
-      matchedPrice,
-      matchedQuantity,
-      null
-    );
+        await this.mailService.createMailByOtherService(
+          sellOrder.memberId,
+          2,
+          sellOrder.cropId,
+          matchedPrice,
+          matchedQuantity,
+          null
+        );
 
-    // 매도자 알림 생성
-    await this.mailService.createMailByOtherService(
-      sellOrder.memberId,
-      2,
-      sellOrder.cropId,
-      matchedPrice,
-      matchedQuantity,
-      null
-    );
+        // 레디스 오더북 업데이트
+        if (sellOrder.tradingType === TradingType.LIMIT && sellOrder.unfilledQuantity! > 0) {
+          await this.orderBookService.updateOrder(
+            sellOrder.memberId,
+            sellOrder.cropId,
+            OrderType.SELL,
+            sellOrder.orderId,
+            matchedQuantity,
+            sellOrder.tradingType
+          );
+        }
+        if (buyOrder.tradingType === TradingType.LIMIT && buyOrder.unfilledQuantity! > 0) {
+          await this.orderBookService.updateOrder(
+            buyOrder.memberId,
+            buyOrder.cropId,
+            OrderType.BUY,
+            buyOrder.orderId,
+            matchedQuantity,
+            buyOrder.tradingType
+          );
+        }
 
-    // 지정가 거래만 오더북 업데이트
-    if (sellOrder.tradingType === TradingType.LIMIT && sellOrder.unfilledQuantity! > 0) {
-      await this.orderBookService.updateOrder(
-        sellOrder.memberId,
-        sellOrder.cropId,
-        OrderType.SELL,
-        sellOrder.orderId,
-        matchedQuantity,
-        sellOrder.tradingType
-      );
-    }
-    if (buyOrder.tradingType === TradingType.LIMIT && buyOrder.unfilledQuantity! > 0) {
-      await this.orderBookService.updateOrder(
-        buyOrder.memberId,
-        buyOrder.cropId,
-        OrderType.BUY,
-        buyOrder.orderId,
-        matchedQuantity,
-        buyOrder.tradingType
-      );
-    }
+        if (buyOrder.tradingType == TradingType.LIMIT && buyOrder.unfilledQuantity! === 0) {
+          await this.orderBookService.removeOrder(
+            buyOrder.memberId,
+            buyOrder.cropId,
+            buyOrder.orderId,
+            OrderType.BUY,
+            buyOrder.tradingType
+          );
+        }
 
-    if (buyOrder.tradingType == TradingType.LIMIT && buyOrder.unfilledQuantity! === 0) {
-      await this.orderBookService.removeOrder(
-        buyOrder.memberId,
-        buyOrder.cropId,
-        buyOrder.orderId,
-        OrderType.BUY,
-        buyOrder.tradingType
-      );
-    }
-
-    if (buyOrder.tradingType == TradingType.LIMIT && sellOrder.unfilledQuantity! === 0) {
-      await this.orderBookService.removeOrder(
-        sellOrder.memberId,
-        sellOrder.cropId,
-        sellOrder.orderId,
-        OrderType.SELL,
-        sellOrder.tradingType
-      );
-    }
+        if (buyOrder.tradingType == TradingType.LIMIT && sellOrder.unfilledQuantity! === 0) {
+          await this.orderBookService.removeOrder(
+            sellOrder.memberId,
+            sellOrder.cropId,
+            sellOrder.orderId,
+            OrderType.SELL,
+            sellOrder.tradingType
+          );
+        }
+      } catch (error) {
+        console.error('주문 매칭 처리 중 오류:', error);
+        throw new Error('주문 매칭 처리에 실패했습니다.');
+      }
+    });
   }
 
   private async handlePendingRollback(

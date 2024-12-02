@@ -1,6 +1,6 @@
 import { handleError } from './HandleError';
 import { api } from './Api';
-import { OwnCropData } from '@/types/Crop';
+import { CropListData } from '@/types/Crop';
 
 interface CashResponse {
   success: boolean;
@@ -19,7 +19,7 @@ interface CropsValueResponse {
 interface CropsResponse {
   success: boolean;
   message: string;
-  ownCrops?: OwnCropData[];
+  ownCrops?: CropListData[];
 }
 
 export const getCash = async (): Promise<CashResponse> => {

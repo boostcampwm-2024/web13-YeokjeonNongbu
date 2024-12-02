@@ -1,6 +1,7 @@
 import { CropData } from '@/types/Crop';
 import { useUser } from '../public/UserContext';
-import { useState } from 'react';
+import { useContext, useState } from 'react';
+import { AlertContext } from '@/components/public/AlertContext';
 import {
   postLimitBuyOrder,
   postLimitSellOrder,
@@ -12,11 +13,12 @@ interface TradeProps {
   trade: string;
   order: string;
   currentCrop: number;
-  crops: CropData[];
+  cropNameList: CropData[];
   setOrderType: (order: string) => void;
 }
 
-const Trade: React.FC<TradeProps> = ({ trade, order, currentCrop, crops, setOrderType }) => {
+const Trade: React.FC<TradeProps> = ({ trade, order, currentCrop, cropNameList, setOrderType }) => {
+  const { alert } = useContext(AlertContext);
   const [price, setPrice] = useState<number>(0);
   const [totalAmount, setTotalAmount] = useState<number>(0);
   const [quantity, setQuantity] = useState<number>(0);
@@ -66,11 +68,11 @@ const Trade: React.FC<TradeProps> = ({ trade, order, currentCrop, crops, setOrde
   };
 
   const handleMaxTotalAmount = () => {
-    setTotalAmount(availableCash);
+    setTotalAmount(Number(availableCash));
   };
 
   const handleOrder = async () => {
-    const crop = crops.find(crop => crop.cropId === currentCrop);
+    const crop = cropNameList.find(crop => crop.cropId === currentCrop);
 
     if (!crop) {
       console.error('Crop not found');
@@ -120,7 +122,7 @@ const Trade: React.FC<TradeProps> = ({ trade, order, currentCrop, crops, setOrde
 
     try {
       const response = await fetchMethod(orderData);
-      console.log(response);
+      await alert(response.message);
     } catch (error) {
       console.error(error);
     }

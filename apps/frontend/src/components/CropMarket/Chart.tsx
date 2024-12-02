@@ -62,7 +62,7 @@ const Chart: React.FC<ChartProps> = ({ timeData }) => {
     tooltip: {
       shared: false,
       y: {
-        formatter: (val: number) => `$${val.toFixed(2)}`
+        formatter: (val: number) => `￦ ${val}`
       }
     }
   };

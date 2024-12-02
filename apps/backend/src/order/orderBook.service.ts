@@ -102,9 +102,7 @@ export class OrderBookService {
     tradingType: TradingType
   ): Promise<OrderBookDto[]> {
     const orderKey = this.getOrderKey(cropId, orderType, tradingType);
-
     let orders: string[];
-
     if (orderType === OrderType.SELL) {
       orders = await this.redisClient.zRange(orderKey, 0, -1);
     } else if (orderType === OrderType.BUY) {

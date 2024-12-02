@@ -59,6 +59,7 @@ export class WebsocketGateway implements OnGatewayInit, OnGatewayConnection, OnG
         client.join(String(cropId));
         this.sendCurrentMarketState(client, cropId);
         this.getInitChartData(client, cropId);
+        this.cropPricesTransfer();
       }
     });
   }
@@ -90,6 +91,10 @@ export class WebsocketGateway implements OnGatewayInit, OnGatewayConnection, OnG
           const cropId = match[1];
           await this.handleRedisUpdate(cropId);
         }
+      });
+
+      await subscriber.pSubscribe('__keyspace@0__:crop:price', () => {
+        this.cropPricesTransfer();
       });
     } catch (error) {
       console.log(error);
@@ -161,6 +166,15 @@ export class WebsocketGateway implements OnGatewayInit, OnGatewayConnection, OnG
 
   async chartHourDataTransfer(cropId: string, data: any) {
     this.server.to(String(cropId)).emit('hourChart', data);
+  }
+
+  async cropPricesTransfer() {
+    const allPrices = await this.redisClient.hGetAll('crop:price');
+    const prices = Object.entries(allPrices).map(([cropId, price]) => ({
+      cropId: Number(cropId),
+      price: Number(price)
+    }));
+    this.server.emit('prices', prices);
   }
 
   async cropDataTransfer(memberId: string, data: any) {

@@ -7,9 +7,15 @@ export class ErrorExceptionFilter implements ExceptionFilter {
     const ctx = host.switchToHttp();
     const response = ctx.getResponse<Response>();
     const status = exception.getStatus();
+    const exceptionResponse = exception.getResponse() as { message: string; data?: any }; // 타입 단언
+
+    const message = exceptionResponse.message;
+    const data = exceptionResponse.data;
+
     response.status(status).json({
       code: status,
-      message: exception.message
+      message,
+      data // 추가 데이터 포함
     });
   }
 }

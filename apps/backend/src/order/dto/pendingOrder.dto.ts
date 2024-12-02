@@ -10,6 +10,9 @@ export class PendingOrderDto {
   @ApiProperty({ description: '주문 타입', example: 'buy' })
   orderType: string;
 
+  @ApiProperty({ description: '거래 타입', example: 'limit' })
+  tradingType: string;
+
   @ApiProperty({ description: '주문 가격', example: 100 })
   price: number;
 

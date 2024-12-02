@@ -17,3 +17,16 @@ export interface HistoryData {
   createdAt: string;
   amount: number;
 }
+
+export interface PendingData {
+  orderId: number;
+  cropId: number;
+  orderType: string;
+  tradingType: string;
+  price: number;
+  quantity: number;
+  filledQuantity: number;
+  unfilledQuantity: number;
+  status: string;
+  time: string;
+}

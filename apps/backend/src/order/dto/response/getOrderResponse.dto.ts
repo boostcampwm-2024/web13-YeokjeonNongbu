@@ -4,7 +4,7 @@ import { PendingOrderDto } from '../pendingOrder.dto';
 export class GetOrderResponseDto {
   @ApiProperty({
     description: '응답 코드',
-    example: 200
+    example: 201
   })
   code: number;
 

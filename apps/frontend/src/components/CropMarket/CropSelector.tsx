@@ -6,7 +6,7 @@ interface CropSelectorProps {
   onSelect: (crop: number) => void;
   activeInterval: string;
   handleIntervalChange: (interval: string) => void;
-  crops: CropData[];
+  cropNameList: CropData[];
 }
 
 const CropSelector: React.FC<CropSelectorProps> = ({
@@ -14,11 +14,11 @@ const CropSelector: React.FC<CropSelectorProps> = ({
   onSelect,
   activeInterval,
   handleIntervalChange,
-  crops
+  cropNameList
 }) => {
   return (
     <div className="w-full flex flex-row flex-wrap md:gap-1 lg:gap-4 xl:gap-8 2xl:gap-10">
-      {crops.map(crop => (
+      {cropNameList.map(crop => (
         <button
           key={crop.cropId}
           onClick={() => onSelect(crop.cropId)}

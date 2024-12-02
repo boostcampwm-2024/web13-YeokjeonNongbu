@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, HttpException, HttpStatus, Post, UseGuards } from '@nestjs/common';
 import { OrderService } from './order.service';
 import { OrderBookService } from './orderBook.service';
 import DtoTransformer from './utils/dtoTransformer';
@@ -11,10 +11,11 @@ import { transactionResponseDecorator } from './decorator/getTransactions.decora
 import { HasSufficientCashGuard } from '../account/guards/hasSufficientCashGuard';
 import { AccountService } from '../account/account.service';
 import { HasSufficientCropGuard } from '../account/guards/hasSufficientCropGuard';
-import { MarketOrderDto } from './dto/marketOrder.dto';
 import { User } from '../global/utils/memberData';
 import { CancelOrderDto } from './dto/cancelOrder.dto';
 import { pendingOrdersDecorator } from './decorator/getPendingOrders.decorator';
+import { OrderStatus } from './enums/orderType';
+import { MarketOrderDto } from './dto/marketOrder.dto';
 
 @Controller('api/order')
 export class OrderController {
@@ -33,17 +34,22 @@ export class OrderController {
     @User() user: { memberId: number },
     @Body() limitOrderDto: LimitOrderDto
   ) {
-    const { memberId } = user;
-    const orderDto = DtoTransformer.mapToOrderDto(limitOrderDto, memberId);
-    await this.orderService.saveOrder(orderDto);
-    await this.accountService.updateCashByPlacingOrder(
-      orderDto.memberId,
-      orderDto.quantity! * orderDto.price!,
-      orderDto.orderType
-    );
+    try {
+      const { memberId } = user;
+      const orderDto = DtoTransformer.mapToOrderDto(limitOrderDto, memberId);
+      await this.orderService.saveOrder(orderDto);
+      await this.accountService.updateCashByPlacingOrder(
+        orderDto.memberId,
+        orderDto.quantity! * orderDto.price!,
+        orderDto.orderType
+      );
 
-    await this.matchingService.matchOrders(limitOrderDto.cropId);
-    return successhandler(successMessage.CREATE_ORDER_SUCCESS);
+      await this.matchingService.matchOrders(limitOrderDto.cropId);
+      return successhandler(successMessage.CREATE_ORDER_SUCCESS);
+    } catch (error) {
+      console.error('구매 주문 생성 중 오류:', error);
+      throw new HttpException('구매 주문 생성에 실패했습니다.', HttpStatus.INTERNAL_SERVER_ERROR);
+    }
   }
 
   @Post('sell/limit')
@@ -54,17 +60,22 @@ export class OrderController {
     @User() user: { memberId: number },
     @Body() limitOrderDto: LimitOrderDto
   ) {
-    const { memberId } = user;
-    const orderDto = DtoTransformer.mapToOrderDto(limitOrderDto, memberId);
-    await this.orderService.saveOrder(orderDto);
-    await this.accountService.updateCropByPlacingSellOrder(
-      orderDto.memberId,
-      orderDto.cropId,
-      orderDto.quantity!
-    );
+    try {
+      const { memberId } = user;
+      const orderDto = DtoTransformer.mapToOrderDto(limitOrderDto, memberId);
+      await this.orderService.saveOrder(orderDto);
+      await this.accountService.updateCashByPlacingOrder(
+        orderDto.memberId,
+        orderDto.quantity! * orderDto.price!,
+        orderDto.orderType
+      );
 
-    await this.matchingService.matchOrders(limitOrderDto.cropId);
-    return successhandler(successMessage.CREATE_ORDER_SUCCESS);
+      await this.matchingService.matchOrders(limitOrderDto.cropId);
+      return successhandler(successMessage.CREATE_ORDER_SUCCESS);
+    } catch (error) {
+      console.error('판매 주문 생성 중 오류:', error);
+      throw new HttpException('판매 주문 생성에 실패했습니다.', HttpStatus.INTERNAL_SERVER_ERROR);
+    }
   }
 
   @Post('buy/market')
@@ -75,17 +86,25 @@ export class OrderController {
     @User() user: { memberId: number },
     @Body() marketOrderDto: MarketOrderDto
   ) {
-    const { memberId } = user;
-    const orderDto = DtoTransformer.mapToOrderDto(marketOrderDto, memberId);
-    await this.orderService.saveOrder(orderDto);
-    await this.accountService.updateCashByPlacingOrder(
-      orderDto.memberId,
-      orderDto.totalAmount!,
-      orderDto.orderType
-    );
+    try {
+      const { memberId } = user;
+      const orderDto = DtoTransformer.mapToOrderDto(marketOrderDto, memberId);
+      await this.orderService.saveOrder(orderDto);
+      await this.accountService.updateCashByPlacingOrder(
+        orderDto.memberId,
+        orderDto.totalAmount!,
+        orderDto.orderType
+      );
 
-    await this.matchingService.matchOrders(marketOrderDto.cropId);
-    return successhandler(successMessage.CREATE_ORDER_SUCCESS);
+      await this.matchingService.matchOrders(marketOrderDto.cropId);
+      return successhandler(successMessage.CREATE_ORDER_SUCCESS);
+    } catch (error) {
+      console.error('시장가 구매 주문 생성 중 오류:', error);
+      throw new HttpException(
+        '시장가 구매 주문 생성에 실패했습니다.',
+        HttpStatus.INTERNAL_SERVER_ERROR
+      );
+    }
   }
 
   @Post('sell/market')
@@ -96,46 +115,97 @@ export class OrderController {
     @User() user: { memberId: number },
     @Body() marketOrderDto: MarketOrderDto
   ) {
-    const { memberId } = user;
-    const orderDto = DtoTransformer.mapToOrderDto(marketOrderDto, memberId);
-    await this.orderService.saveOrder(orderDto);
-    await this.accountService.updateCropByPlacingSellOrder(
-      orderDto.memberId,
-      orderDto.cropId,
-      orderDto.quantity!
-    );
+    try {
+      const { memberId } = user;
+      const orderDto = DtoTransformer.mapToOrderDto(marketOrderDto, memberId);
+      await this.orderService.saveOrder(orderDto);
+      await this.accountService.updateCropByPlacingSellOrder(
+        orderDto.memberId,
+        orderDto.cropId,
+        orderDto.quantity!
+      );
 
-    await this.matchingService.matchOrders(marketOrderDto.cropId);
-    return successhandler(successMessage.CREATE_ORDER_SUCCESS);
+      await this.matchingService.matchOrders(marketOrderDto.cropId);
+      return successhandler(successMessage.CREATE_ORDER_SUCCESS);
+    } catch (error) {
+      console.error('시장가 판매 주문 생성 중 오류:', error);
+      throw new HttpException(
+        '시장가 판매 주문 생성에 실패했습니다.',
+        HttpStatus.INTERNAL_SERVER_ERROR
+      );
+    }
   }
 
   @Get('')
   @ApiOperation({ summary: '각 회원 체결 내역 조회' })
   @transactionResponseDecorator()
   async getTransactionsByMemberId(@User() user: { memberId: number }) {
-    const { memberId } = user;
-    const transactions = await this.orderService.getTransactionsByMemberId(memberId);
-    return successhandler(successMessage.GET_TRANSACTION_SUCCESS, transactions);
+    try {
+      const { memberId } = user;
+      const transactions = await this.orderService.getTransactionsByMemberId(memberId);
+      return successhandler(successMessage.GET_TRANSACTION_SUCCESS, transactions);
+    } catch (error) {
+      console.error('체결 내역 조회 중 오류:', error);
+      throw new HttpException('체결 내역 조회에 실패했습니다.', HttpStatus.INTERNAL_SERVER_ERROR);
+    }
   }
 
   @Get('pending')
   @ApiOperation({ summary: '각 회원 진행 주문 내역 조회' })
   @pendingOrdersDecorator()
   async getPendingOrdersByMemberId(@User() user: { memberId: number }) {
-    const { memberId } = user;
-    const pendingOrders = await this.orderService.getPendingOrdersByMemberId(memberId);
-    return successhandler(successMessage.GET_PENDING_ORDER_SUCCESS, pendingOrders);
+    try {
+      const { memberId } = user;
+      const pendingOrders = await this.orderService.getPendingOrdersByMemberId(memberId);
+      return successhandler(successMessage.GET_PENDING_ORDER_SUCCESS, pendingOrders);
+    } catch (error) {
+      console.error('진행 주문 내역 조회 중 오류:', error);
+      throw new HttpException(
+        '진행 주문 내역 조회에 실패했습니다.',
+        HttpStatus.INTERNAL_SERVER_ERROR
+      );
+    }
   }
 
   @Post('cancel')
   @ApiOperation({ summary: '주문 취소' })
+  @pendingOrdersDecorator()
   @cancelOrderResponseDecorator()
   async cancelOrder(@User() user: { memberId: number }, @Body() cancelOrderDto: CancelOrderDto) {
     const { memberId } = user;
     const { cropId, orderId, orderType, tradingType } = cancelOrderDto;
 
-    await this.orderBookService.removeOrder(memberId, cropId, orderId, orderType, tradingType);
-    await this.orderService.cancelOrder(memberId, orderId, cropId, orderType);
-    return successhandler(successMessage.DELETE_ORDER_SUCCESS);
+    try {
+      const orderStatus = await this.orderService.getOrderStatus(memberId, orderId);
+      if (orderStatus === OrderStatus.CANCELED || orderStatus === OrderStatus.COMPLETED) {
+        const pendingOrders = await this.orderService.getPendingOrdersByMemberId(memberId);
+        return {
+          code: HttpStatus.BAD_REQUEST,
+          message: '대기중인 주문이 존재하지 않습니다.',
+          data: pendingOrders
+        };
+      }
+
+      await this.orderBookService.removeOrder(memberId, cropId, orderId, orderType, tradingType);
+      await this.orderService.cancelOrder(memberId, orderId, cropId, orderType);
+      const pendingOrders = await this.orderService.getPendingOrdersByMemberId(memberId);
+
+      return {
+        code: 201,
+        message: '주문이 성공적으로 삭제되었습니다.',
+        data: pendingOrders
+      };
+    } catch (error) {
+      console.error('주문 취소 중 오류:', error);
+      if (error instanceof HttpException && error.getStatus() === HttpStatus.NOT_FOUND) {
+        const pendingOrders = await this.orderService.getPendingOrdersByMemberId(memberId);
+        return {
+          code: HttpStatus.NOT_FOUND,
+          message: '주문이 존재하지 않습니다.',
+          data: pendingOrders
+        };
+      }
+      throw new HttpException('주문 취소에 실패했습니다.', HttpStatus.INTERNAL_SERVER_ERROR);
+    }
   }
 }

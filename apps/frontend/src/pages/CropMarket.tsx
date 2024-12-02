@@ -6,22 +6,19 @@ import Chart from '@/components/CropMarket/Chart';
 import TradeSection from '@/components/CropMarket/TradeSection';
 import WoodBoard from '@/components/CropMarket/WoodBoard';
 import OwnCrop from '@/components/CropMarket/OwnCrop';
-import { CropData } from '@/types/Crop';
+import { CropData, OwnCropData } from '@/types/Crop';
 import { getCrops } from '@/services/MarketApi';
 import { cropList } from '@/constants/CropConstants';
 
-const data1Hour = [
-  { x: '2024-11-20T09:00:00', y: 100 },
-  { x: '2024-11-20T10:00:00', y: 120 },
-  { x: '2024-11-20T11:00:00', y: 140 }
-];
-
 const CropMarket: React.FC = () => {
-  const [crop, setCrop] = useState<number>(1);
+  const [curCrop, setCurCrop] = useState<number>(1);
+  const [cropNameList, setCropNameList] = useState<CropData[]>([]);
+  const [ownCrop, setOwnCrop] = useState<OwnCropData[]>([]);
+  const [nowPrice, setNowPrice] = useState([]);
   const [activeInterval, setActiveInterval] = useState<string>('1min');
   const [data1Min, setData1Min] = useState<{ x: string; y: number }[]>([]);
+  const [data1Hour, setData1Hour] = useState<{ x: string; y: number }[]>([]);
   const [timeData, setTimeData] = useState<{ x: string; y: number }[]>([]);
-  const [crops, setCrops] = useState<CropData[]>([]);
   const [marketData, setMarketData] = useState<{
     buyOrders: { price: number; quantity: number }[];
     sellOrders: { price: number; quantity: number }[];
@@ -36,14 +33,14 @@ const CropMarket: React.FC = () => {
     const fetchCrops = async () => {
       const response = await getCrops();
       if (response.success && response.crops) {
-        setCrops(
+        setCropNameList(
           response.crops.map(e => ({
             cropId: e.cropId,
             cropName: e.cropName.toLowerCase()
           }))
         );
       } else {
-        setCrops([]);
+        setCropNameList([]);
       }
     };
 
@@ -51,15 +48,19 @@ const CropMarket: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    const newSocket = io(import.meta.env.VITE_BASE_URL);
+    const newSocket = io(import.meta.env.VITE_BASE_URL, {
+      auth: {
+        authorization: `Bearer ${localStorage.getItem('accessToken')}`
+      }
+    });
 
     newSocket.on('connect', () => {
-      console.log('Connected to WebSocket server');
-      newSocket.emit('join', { cropId: crop });
+      setTimeout(() => {
+        newSocket.emit('join', { cropId: curCrop });
+      }, 50);
     });
 
     newSocket.on('market-update', data => {
-      console.log('Market updated:', data);
       if (data && data.buyOrders && data.sellOrders) {
         setMarketData({
           buyOrders: data.buyOrders,
@@ -69,15 +70,29 @@ const CropMarket: React.FC = () => {
       }
     });
 
-    newSocket.on('chart', data => {
-      // console.log('chart:', data);
-      setData1Min(data);
+    newSocket.on('minChart', data => {
+      setData1Min(data.cropMinData);
+    });
+
+    newSocket.on('hourChart', data => {
+      setData1Hour(data.cropHourData);
+    });
+
+    newSocket.on('crops', data => {
+      setOwnCrop(data);
+    });
+
+    newSocket.on('prices', data => {
+      setNowPrice(data);
     });
 
     return () => {
+      newSocket.off('market-update');
+      newSocket.off('chart');
+      newSocket.off('crops');
       newSocket.disconnect();
     };
-  }, [crop]);
+  }, [curCrop]);
 
   useEffect(() => {
     setTimeData(activeInterval === '1min' ? data1Min : data1Hour);
@@ -87,7 +102,7 @@ const CropMarket: React.FC = () => {
     setActiveInterval(interval);
   };
 
-  const cropName = crops.find(c => c.cropId === crop)?.cropName ?? '';
+  const cropName = cropNameList.find(c => c.cropId === curCrop)?.cropName ?? '';
   const validCropName = cropName && cropList[cropName];
 
   return (
@@ -95,11 +110,11 @@ const CropMarket: React.FC = () => {
       <div className="flex flex-col items-start z-[10] gap-4 w-full lg:w-[60%] max-w-[1300px]">
         <div className="w-full flex flex-col justify-start gap-2">
           <CropSelector
-            currentCrop={crop}
-            onSelect={setCrop}
+            currentCrop={curCrop}
+            onSelect={setCurCrop}
             activeInterval={activeInterval}
             handleIntervalChange={handleIntervalChange}
-            crops={crops}
+            cropNameList={cropNameList}
           />
           <hr className="w-full bg-black h-[1px]" />
         </div>
@@ -119,12 +134,12 @@ const CropMarket: React.FC = () => {
             <h3 className="flex justify-center lg:text-sm xl:text-base font-bold mb-2">
               보유 작물
             </h3>
-            <OwnCrop />
+            <OwnCrop ownCrop={ownCrop} cropNameList={cropNameList} nowPrice={nowPrice} />
           </WoodBoard>
         </section>
       </div>
       <div className="flex flex-col items-center z-[10]">
-        <TradeSection crops={crops} currentCrop={crop} />
+        <TradeSection cropNameList={cropNameList} currentCrop={curCrop} />
         <img src="/icon.png" className="w-56 h-56" />
       </div>
     </main>

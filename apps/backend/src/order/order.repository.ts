@@ -1,7 +1,7 @@
-import { Injectable } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { DatabaseService } from '../database/database.service';
 import { OrderDto } from './dto/order.dto';
-import { OrderStatus, TradingType } from './enums/orderType';
+import { OrderStatus, toOrderStatus, TradingType } from './enums/orderType';
 import { OrderBookDto } from './dto/orderBook.dto';
 import { TransactionDto } from './dto/transaction.dto';
 import { Client } from 'pg';
@@ -12,13 +12,18 @@ export class OrderRepository {
   constructor(private readonly databaseService: DatabaseService) {}
 
   async saveOrder(order: OrderDto): Promise<number[]> {
-    switch (order.tradingType) {
-      case 'limit':
-        return await this.saveLimitOrder(order);
-      case 'market':
-        return await this.saveMarketOrder(order);
-      default:
-        throw new Error(`Unsupported tradingType: ${order.tradingType}`);
+    try {
+      switch (order.tradingType) {
+        case 'limit':
+          return await this.saveLimitOrder(order);
+        case 'market':
+          return await this.saveMarketOrder(order);
+        default:
+          throw new Error(`지원되지 않는 거래 유형: ${order.tradingType}`);
+      }
+    } catch (error) {
+      console.error('주문 저장 중 오류:', error);
+      throw new HttpException('주문 저장에 실패했습니다.', HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
 
@@ -50,8 +55,13 @@ export class OrderRepository {
       order.time || new Date()
     ];
 
-    const result = await this.databaseService.query(query, values);
-    return [result.rows[0].order_id, result.rows[0].member_id];
+    try {
+      const result = await this.databaseService.query(query, values);
+      return [result.rows[0].order_id, result.rows[0].member_id];
+    } catch (error) {
+      console.error('지정가 주문 저장 중 오류:', error);
+      throw new HttpException('지정가 주문 저장에 실패했습니다.', HttpStatus.INTERNAL_SERVER_ERROR);
+    }
   }
 
   private async saveMarketOrder(order: OrderDto): Promise<number[]> {
@@ -84,8 +94,13 @@ export class OrderRepository {
       order.time || new Date()
     ];
 
-    const result = await this.databaseService.query(query, values);
-    return [result.rows[0].order_id, result.rows[0].member_id];
+    try {
+      const result = await this.databaseService.query(query, values);
+      return [result.rows[0].order_id, result.rows[0].member_id];
+    } catch (error) {
+      console.error('시장가 주문 저장 중 오류:', error);
+      throw new HttpException('시장가 주문 저장에 실패했습니다.', HttpStatus.INTERNAL_SERVER_ERROR);
+    }
   }
 
   async updateOrder(
@@ -116,7 +131,12 @@ export class OrderRepository {
         ? [status, filledQuantity, orderId]
         : [status, filledQuantity, unfilledQuantity, orderId];
 
-    await this.databaseService.query(query, values);
+    try {
+      await this.databaseService.query(query, values);
+    } catch (error) {
+      console.error('주문 업데이트 중 오류:', error);
+      throw new HttpException('주문 업데이트에 실패했습니다.', HttpStatus.INTERNAL_SERVER_ERROR);
+    }
   }
 
   async saveTransaction(
@@ -139,10 +159,14 @@ export class OrderRepository {
       matchedQuantity
     ];
 
-    await this.databaseService.query(query, values);
+    try {
+      await this.databaseService.query(query, values);
+    } catch (error) {
+      console.error('트랜잭션 저장 중 오류:', error);
+      throw new HttpException('트랜잭션 저장에 실패했습니다.', HttpStatus.INTERNAL_SERVER_ERROR);
+    }
   }
 
-  // 특정 회원의 트랜잭션 조회
   async getTransactionsByMemberId(memberId: number): Promise<TransactionDto[]> {
     const query = `
             SELECT *
@@ -151,17 +175,21 @@ export class OrderRepository {
         `;
 
     const values = [memberId];
-    const result = await this.databaseService.query(query, values);
-
-    return result.rows.map(data => ({
-      orderId: data.order_id,
-      cropId: data.crop_id,
-      orderType: data.order_type,
-      price: data.price,
-      totalPrice: data.total_price,
-      createdAt: data.created_at,
-      amount: data.amount
-    }));
+    try {
+      const result = await this.databaseService.query(query, values);
+      return result.rows.map(data => ({
+        orderId: data.order_id,
+        cropId: data.crop_id,
+        orderType: data.order_type,
+        price: data.price,
+        totalPrice: data.total_price,
+        createdAt: data.created_at,
+        amount: data.amount
+      }));
+    } catch (error) {
+      console.error('거래 내역 조회 중 오류:', error);
+      throw new HttpException('거래 내역 조회에 실패했습니다.', HttpStatus.INTERNAL_SERVER_ERROR);
+    }
   }
 
   async getPendingOrdersByMemberId(memberId: number): Promise<PendingOrderDto[]> {
@@ -172,19 +200,27 @@ export class OrderRepository {
               AND status = 'pending'
         `;
     const values = [memberId];
-    const result = await this.databaseService.query(query, values);
-
-    return result.rows.map(data => ({
-      orderId: data.order_id,
-      cropId: data.crop_id,
-      orderType: data.order_type,
-      price: data.price,
-      quantity: data.quantity,
-      filledQuantity: data.filled_quantity,
-      unfilledQuantity: data.unfilled_quantity,
-      status: data.status,
-      time: data.time
-    }));
+    try {
+      const result = await this.databaseService.query(query, values);
+      return result.rows.map(data => ({
+        orderId: data.order_id,
+        cropId: data.crop_id,
+        orderType: data.order_type,
+        tradingType: data.trading_type,
+        price: data.price,
+        quantity: data.quantity,
+        filledQuantity: data.filled_quantity,
+        unfilledQuantity: data.unfilled_quantity,
+        status: data.status,
+        time: data.time
+      }));
+    } catch (error) {
+      console.error('진행 중인 주문 조회 중 오류:', error);
+      throw new HttpException(
+        '진행 중인 주문 조회에 실패했습니다.',
+        HttpStatus.INTERNAL_SERVER_ERROR
+      );
+    }
   }
 
   async getOrderById(memberId: number, orderId: number): Promise<OrderDto> {
@@ -195,22 +231,32 @@ export class OrderRepository {
               AND member_Id = $2
         `;
     const values = [orderId, memberId];
-    const result = await this.databaseService.query(query, values);
-
-    const data = result.rows[0];
-    return {
-      cropId: data.crop_id,
-      memberId: data.member_id,
-      orderType: data.order_type,
-      tradingType: data.trading_type,
-      quantity: data.quantity,
-      price: data.price,
-      status: data.status,
-      filledQuantity: data.filled_quantity,
-      unfilledQuantity: data.unfilled_quantity,
-      totalAmount: data.total_amount,
-      time: data.time
-    };
+    try {
+      const result = await this.databaseService.query(query, values);
+      if (result.rows.length === 0) {
+        throw new HttpException('주문을 찾을 수 없습니다.', HttpStatus.NOT_FOUND);
+      }
+      const data = result.rows[0];
+      return {
+        cropId: data.crop_id,
+        memberId: data.member_id,
+        orderType: data.order_type,
+        tradingType: data.trading_type,
+        quantity: data.quantity,
+        price: data.price,
+        status: data.status,
+        filledQuantity: data.filled_quantity,
+        unfilledQuantity: data.unfilled_quantity,
+        totalAmount: data.total_amount,
+        time: data.time
+      };
+    } catch (error) {
+      console.error('주문 ID로 조회 중 오류:', error);
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      throw new HttpException('주문 ID로 조회에 실패했습니다.', HttpStatus.INTERNAL_SERVER_ERROR);
+    }
   }
 
   async cancelOrder(memberId: number, orderId: number): Promise<void> {
@@ -222,10 +268,45 @@ export class OrderRepository {
         `;
 
     const values = [orderId, memberId];
-    await this.databaseService.query(query, values);
+    try {
+      await this.databaseService.query(query, values);
+    } catch (error) {
+      console.error('주문 취소 중 오류:', error);
+      throw new HttpException('주문 취소에 실패했습니다.', HttpStatus.INTERNAL_SERVER_ERROR);
+    }
   }
 
   async runInTransaction(callback: (client: Client) => Promise<void>): Promise<void> {
-    await this.databaseService.runInTransaction(callback);
+    try {
+      await this.databaseService.runInTransaction(callback);
+    } catch (error) {
+      console.error('트랜잭션 중 오류:', error);
+      throw new HttpException('트랜잭션 실패', HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  async getOrderStatus(memberId: number, orderId: number): Promise<OrderStatus> {
+    const query = `
+            SELECT status
+            FROM orders
+            WHERE order_id = $1
+              AND member_id = $2
+        `;
+    const values = [orderId, memberId];
+    try {
+      const result = await this.databaseService.query(query, values);
+
+      if (result.rows.length === 0) {
+        throw new HttpException('주문을 찾을 수 없습니다.', HttpStatus.NOT_FOUND);
+      }
+
+      return toOrderStatus(result.rows[0]?.status);
+    } catch (error) {
+      console.error('주문 상태 조회 중 오류:', error);
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      throw new HttpException('주문 상태 조회에 실패했습니다.', HttpStatus.INTERNAL_SERVER_ERROR);
+    }
   }
 }

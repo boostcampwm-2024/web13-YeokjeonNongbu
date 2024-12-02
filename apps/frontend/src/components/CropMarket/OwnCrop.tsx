@@ -1,45 +1,18 @@
-const currentCrops = [
-  {
-    crop: '당근',
-    ownedAmount: 23,
-    ownedValue: '￦ 200,000',
-    profitRate: '+12.5%',
-    profitAmount: '￦25,000'
-  },
-  {
-    crop: '사과',
-    ownedAmount: 23,
-    ownedValue: '￦ 200,000',
-    profitRate: '-10.0%',
-    profitAmount: '￦-20,000'
-  },
-  {
-    crop: '수박',
-    ownedAmount: 23,
-    ownedValue: '￦ 200,000',
-    profitRate: '+12.5%',
-    profitAmount: '￦25,000'
-  },
-  {
-    crop: '포도',
-    ownedAmount: 23,
-    ownedValue: '￦ 200,000',
-    profitRate: '+12.5%',
-    profitAmount: '￦25,000'
-  },
-  {
-    crop: '버섯',
-    ownedAmount: 23,
-    ownedValue: '￦ 200,000',
-    profitRate: '+12.5%',
-    profitAmount: '￦25,000'
-  }
-];
+import { cropList } from '@/constants/CropConstants';
+import { CropData, NowPriceData, OwnCropData } from '@/types/Crop';
 
-const OwnCrop: React.FC = () => {
+interface OwnCropProps {
+  ownCrop: OwnCropData[];
+  cropNameList: CropData[];
+  nowPrice: NowPriceData[];
+}
+
+const OwnCrop: React.FC<OwnCropProps> = ({ ownCrop, cropNameList, nowPrice }) => {
+  const ownCropMap = new Map(ownCrop.map(({ cropId, totalQuantity }) => [cropId, totalQuantity]));
+
   return (
     <>
-      <table className="h-full w-full md:text-xs lg:text-xs xl:text-sm w-full text-center">
+      <table className="h-full w-full md:text-xs lg:text-xs xl:text-sm text-center">
         <thead>
           <tr>
             <th>작물명</th>
@@ -47,14 +20,22 @@ const OwnCrop: React.FC = () => {
             <th>보유가액</th>
           </tr>
         </thead>
-        <tbody className="md:h-24 lg:h-26 xl:h-28 ">
-          {currentCrops.map(({ crop, ownedAmount, ownedValue }, idx) => (
-            <tr key={idx}>
-              <td>{crop}</td>
-              <td>{ownedAmount}</td>
-              <td>{ownedValue}</td>
-            </tr>
-          ))}
+        <tbody className="md:h-24 lg:h-26 xl:h-28">
+          {cropNameList
+            .sort((a, b) => a.cropId - b.cropId)
+            .map(({ cropId, cropName }) => {
+              const cropDisplayName = cropList[cropName] || cropName;
+              const totalQuantity = ownCropMap.get(cropId) ?? 0;
+              const price = nowPrice.find(p => p.cropId === cropId)?.price || 0;
+
+              return (
+                <tr key={cropId}>
+                  <td>{cropDisplayName}</td>
+                  <td>{totalQuantity}</td>
+                  <td>￦ {price * totalQuantity}</td>
+                </tr>
+              );
+            })}
         </tbody>
       </table>
     </>

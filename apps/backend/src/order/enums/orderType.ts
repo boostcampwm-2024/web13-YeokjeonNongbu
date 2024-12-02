@@ -28,3 +28,12 @@ export function toTradingType(tradingType: string): TradingType {
 
   throw new Error(`잘못된 트레이딩 타입입니다. ${tradingType}`);
 }
+
+export function toOrderStatus(orderStatus: string): OrderStatus {
+  if (orderStatus === 'pending') return OrderStatus.PENDING;
+  if (orderStatus === 'partially_filled') return OrderStatus.PARTIALLY_FILLED;
+  if (orderStatus === 'completed') return OrderStatus.COMPLETED;
+  if (orderStatus === 'canceled') return OrderStatus.CANCELED;
+
+  throw new Error(`잘못된 오더 상태입니다. ${orderStatus}`);
+}

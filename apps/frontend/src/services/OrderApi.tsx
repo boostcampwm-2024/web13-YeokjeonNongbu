@@ -22,6 +22,22 @@ export const getOrderHistory = async () => {
   }
 };
 
+export const getPendingOrder = async () => {
+  try {
+    const response = await api.get('order/pending');
+
+    if (response.data.code === 200) {
+      const pending = response.data.data;
+
+      return { success: true, message: response.data.message, pending };
+    }
+
+    return { success: false, message: '알 수 없는 오류가 발생했습니다.' };
+  } catch (error) {
+    return handleError(error, '데이터 로딩 중 오류가 발생했습니다.');
+  }
+};
+
 export const postLimitBuyOrder = async (data: Order) => {
   try {
     const response = await api.post('order/buy/limit', data);
@@ -83,7 +99,13 @@ export const postCancelOrder = async (data: Order) => {
     const response = await api.post('order/cancel', data);
 
     if (response.data.code === 201) {
-      return { success: true };
+      const pending = response.data.data;
+
+      return { success: true, message: response.data.message, pending };
+    } else if (response.data.code === 400 || response.data.code === 404) {
+      const pending = response.data.data;
+
+      return { success: false, message: response.data.message, pending };
     }
 
     return { success: false, message: '알 수 없는 오류가 발생했습니다.' };

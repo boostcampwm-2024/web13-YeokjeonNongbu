@@ -34,6 +34,8 @@
     "@nestjs/websockets": "^10.4.10",
     "backend": "file:",
     "bcrypt": "^5.1.1",
+    "class-transformer": "^0.5.1",
+    "class-validator": "^0.14.1",
     "dotenv": "^16.4.5",
     "express": "^4.21.1",
     "jsonwebtoken": "^9.0.2",

@@ -1,10 +1,10 @@
-import { OwnCropData } from '@/types/Index';
+import { CropListData } from '@/types/Index';
 import { cropList } from '@/constants/CropConstants';
 import { useEffect, useState } from 'react';
 import { getOwnCrops } from '@/services/AccountApi';
 
 const CropList: React.FC = () => {
-  const [ownCrops, setOwnCrops] = useState<OwnCropData[]>([]);
+  const [ownCrops, setOwnCrops] = useState<CropListData[]>([]);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
