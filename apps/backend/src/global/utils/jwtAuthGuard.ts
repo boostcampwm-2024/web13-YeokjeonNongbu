@@ -1,16 +1,21 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { Inject, Injectable, HttpException, HttpStatus, SetMetadata } from '@nestjs/common';
+import { Reflector } from '@nestjs/core';
 import { JwtService } from '@nestjs/jwt';
-import { HttpException, HttpStatus } from '@nestjs/common';
 import { RedisClientType } from 'redis';
 
 @Injectable()
 export class JwtAuthGuard {
   constructor(
     private jwtService: JwtService,
+    private reflector: Reflector,
     @Inject('REDIS_CLIENT') private readonly redisClient: RedisClientType
   ) {}
 
   async canActivate(context: any) {
+    const isPublic = this.reflector.get<boolean>('isPublic', context.getHandler());
+    if (isPublic) {
+      return true;
+    }
     const request = context.switchToHttp().getRequest();
     const token = request.headers.authorization?.split(' ')[1];
     if (!token) throw new HttpException('허가되지 않은 사용자입니다.', HttpStatus.UNAUTHORIZED);
@@ -33,3 +38,5 @@ export class JwtAuthGuard {
     }
   }
 }
+
+export const Public = () => SetMetadata('isPublic', true);

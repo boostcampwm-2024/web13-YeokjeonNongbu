@@ -12,13 +12,15 @@
   "dependencies": {
     "apexcharts": "^4.0.0",
     "axios": "^1.7.7",
+    "event-source-polyfill": "^1.0.31",
     "framer-motion": "^11.11.15",
     "frontend": "file:",
     "react": "^18.3.1",
     "react-apexcharts": "^1.5.0",
     "react-dom": "^18.3.1",
     "react-query": "^3.39.3",
-    "react-router-dom": "^6.28.0"
+    "react-router-dom": "^6.28.0",
+    "socket.io-client": "^4.8.1"
   },
   "devDependencies": {
     "@eslint/js": "^9.13.0",

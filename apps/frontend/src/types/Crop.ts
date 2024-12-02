@@ -1,10 +1,10 @@
-export interface Crop {
-  name: string;
+export interface OwnCropData {
+  cropId: number;
   quantity: number;
-  image: string;
+  cropName: string;
 }
 
-export interface ApiCrop {
-  name: string;
-  quantity: number;
+export interface CropData {
+  cropId: number;
+  cropName: string;
 }

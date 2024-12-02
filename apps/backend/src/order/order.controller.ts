@@ -1,23 +1,27 @@
-import { Body, Controller, Get, Post, Query, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Post, UseGuards } from '@nestjs/common';
 import { OrderService } from './order.service';
 import { OrderBookService } from './orderBook.service';
 import DtoTransformer from './utils/dtoTransformer';
 import { LimitOrderDto } from './dto/limitOrder.dto';
-import { ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { ApiOperation } from '@nestjs/swagger';
 import { MatchingService } from './matching.service';
 import { successhandler, successMessage } from '../global/successhandler';
-import { orderResponseDecorator } from './decorator/order.decorator';
+import { cancelOrderResponseDecorator, orderResponseDecorator } from './decorator/order.decorator';
 import { transactionResponseDecorator } from './decorator/getTransactions.decorator';
 import { HasSufficientCashGuard } from '../account/guards/hasSufficientCashGuard';
 import { AccountService } from '../account/account.service';
 import { HasSufficientCropGuard } from '../account/guards/hasSufficientCropGuard';
+import { MarketOrderDto } from './dto/marketOrder.dto';
+import { User } from '../global/utils/memberData';
+import { CancelOrderDto } from './dto/cancelOrder.dto';
+import { pendingOrdersDecorator } from './decorator/getPendingOrders.decorator';
 
 @Controller('api/order')
 export class OrderController {
   constructor(
     private readonly orderService: OrderService,
     private readonly orderBookService: OrderBookService,
-    private readonly machineService: MatchingService,
+    private readonly matchingService: MatchingService,
     private readonly accountService: AccountService
   ) {}
 
@@ -25,53 +29,113 @@ export class OrderController {
   @UseGuards(HasSufficientCashGuard)
   @ApiOperation({ summary: '구매 주문 생성' })
   @orderResponseDecorator()
-  async createBuyOrder(@Body() limitOrderDto: LimitOrderDto) {
-    const orderDto = DtoTransformer.toOrderDto(limitOrderDto);
+  async createLimitBuyOrder(
+    @User() user: { memberId: number },
+    @Body() limitOrderDto: LimitOrderDto
+  ) {
+    const { memberId } = user;
+    const orderDto = DtoTransformer.mapToOrderDto(limitOrderDto, memberId);
     await this.orderService.saveOrder(orderDto);
     await this.accountService.updateCashByPlacingOrder(
-      limitOrderDto.memberId,
-      limitOrderDto.quantity * limitOrderDto.price,
-      limitOrderDto.orderType
+      orderDto.memberId,
+      orderDto.quantity! * orderDto.price!,
+      orderDto.orderType
     );
 
-    await this.machineService.matchOrders(limitOrderDto.cropId);
+    await this.matchingService.matchOrders(limitOrderDto.cropId);
     return successhandler(successMessage.CREATE_ORDER_SUCCESS);
   }
 
-  //TODO 판매 주문 생성시 보유 작물 수량 체크하고 pending 상태 구현
   @Post('sell/limit')
   @UseGuards(HasSufficientCropGuard)
   @ApiOperation({ summary: '판매 주문 생성' })
   @orderResponseDecorator()
-  async createSellOrder(@Body() limitOrderDto: LimitOrderDto) {
-    const orderDto = DtoTransformer.toOrderDto(limitOrderDto);
+  async createLimitSellOrder(
+    @User() user: { memberId: number },
+    @Body() limitOrderDto: LimitOrderDto
+  ) {
+    const { memberId } = user;
+    const orderDto = DtoTransformer.mapToOrderDto(limitOrderDto, memberId);
     await this.orderService.saveOrder(orderDto);
     await this.accountService.updateCropByPlacingSellOrder(
-      limitOrderDto.memberId,
-      limitOrderDto.cropId,
-      limitOrderDto.quantity
+      orderDto.memberId,
+      orderDto.cropId,
+      orderDto.quantity!
     );
 
-    await this.machineService.matchOrders(limitOrderDto.cropId);
+    await this.matchingService.matchOrders(limitOrderDto.cropId);
+    return successhandler(successMessage.CREATE_ORDER_SUCCESS);
+  }
+
+  @Post('buy/market')
+  @UseGuards(HasSufficientCashGuard)
+  @ApiOperation({ summary: '시장가 구매 주문 생성' })
+  @orderResponseDecorator()
+  async createMarketBuyOrder(
+    @User() user: { memberId: number },
+    @Body() marketOrderDto: MarketOrderDto
+  ) {
+    const { memberId } = user;
+    const orderDto = DtoTransformer.mapToOrderDto(marketOrderDto, memberId);
+    await this.orderService.saveOrder(orderDto);
+    await this.accountService.updateCashByPlacingOrder(
+      orderDto.memberId,
+      orderDto.totalAmount!,
+      orderDto.orderType
+    );
+
+    await this.matchingService.matchOrders(marketOrderDto.cropId);
+    return successhandler(successMessage.CREATE_ORDER_SUCCESS);
+  }
+
+  @Post('sell/market')
+  @UseGuards(HasSufficientCropGuard)
+  @ApiOperation({ summary: '시장가 판매 주문 생성' })
+  @orderResponseDecorator()
+  async createMarketSellOrder(
+    @User() user: { memberId: number },
+    @Body() marketOrderDto: MarketOrderDto
+  ) {
+    const { memberId } = user;
+    const orderDto = DtoTransformer.mapToOrderDto(marketOrderDto, memberId);
+    await this.orderService.saveOrder(orderDto);
+    await this.accountService.updateCropByPlacingSellOrder(
+      orderDto.memberId,
+      orderDto.cropId,
+      orderDto.quantity!
+    );
+
+    await this.matchingService.matchOrders(marketOrderDto.cropId);
     return successhandler(successMessage.CREATE_ORDER_SUCCESS);
   }
 
   @Get('')
   @ApiOperation({ summary: '각 회원 체결 내역 조회' })
   @transactionResponseDecorator()
-  async getTransactionsByMemberId(@Query('memberId') memberId: number) {
-    const transactions = await this.orderBookService.getTransactionsByMemberId(memberId);
+  async getTransactionsByMemberId(@User() user: { memberId: number }) {
+    const { memberId } = user;
+    const transactions = await this.orderService.getTransactionsByMemberId(memberId);
     return successhandler(successMessage.GET_TRANSACTION_SUCCESS, transactions);
+  }
+
+  @Get('pending')
+  @ApiOperation({ summary: '각 회원 진행 주문 내역 조회' })
+  @pendingOrdersDecorator()
+  async getPendingOrdersByMemberId(@User() user: { memberId: number }) {
+    const { memberId } = user;
+    const pendingOrders = await this.orderService.getPendingOrdersByMemberId(memberId);
+    return successhandler(successMessage.GET_PENDING_ORDER_SUCCESS, pendingOrders);
   }
 
   @Post('cancel')
   @ApiOperation({ summary: '주문 취소' })
-  @ApiResponse({ status: 200, description: '주문 취소 성공' })
-  async cancelOrder(
-    @Body()
-    { cropId, orderId, orderType }: { cropId: number; orderId: number; orderType: 'buy' | 'sell' }
-  ) {
-    await this.orderBookService.removeOrder(cropId, orderId, orderType);
+  @cancelOrderResponseDecorator()
+  async cancelOrder(@User() user: { memberId: number }, @Body() cancelOrderDto: CancelOrderDto) {
+    const { memberId } = user;
+    const { cropId, orderId, orderType, tradingType } = cancelOrderDto;
+
+    await this.orderBookService.removeOrder(memberId, cropId, orderId, orderType, tradingType);
+    await this.orderService.cancelOrder(memberId, orderId, cropId, orderType);
     return successhandler(successMessage.DELETE_ORDER_SUCCESS);
   }
 }

@@ -2,7 +2,7 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { ErrorExceptionFilter } from './global/filter/errorExceptionFilter';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
-import { ConfigService } from '@nestjs/config';
+// import { ConfigService } from '@nestjs/config';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -16,9 +16,9 @@ async function bootstrap() {
     .build();
 
   const document = SwaggerModule.createDocument(app, config);
-  const configService = app.get(ConfigService);
+  // const configService = app.get(ConfigService);
   app.enableCors({
-    origin: configService.get('CORS_ORIGIN'),
+    origin: true,
     credentials: true
   });
 

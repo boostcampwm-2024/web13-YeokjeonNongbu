@@ -7,14 +7,15 @@ export class HasSufficientCropGuard implements CanActivate {
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest();
-    const { tradingType, memberId, cropId, quantity } = request.body;
+    const user = request.user;
+    const { memberId } = user;
+    const { tradingType, cropId, quantity } = request.body;
 
     let hasEnoughCrop = false;
     // 지정가 주문 확인
     if (tradingType === 'limit') {
       hasEnoughCrop = await this.canLimitSellOrder(cropId, memberId, quantity);
     } else if (tradingType === 'market') {
-      // TODO : 시장가 주문 기능 보안 예정
       hasEnoughCrop = await this.canMarketSellOrder(cropId, memberId, quantity);
     }
 

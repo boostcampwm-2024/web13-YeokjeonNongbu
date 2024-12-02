@@ -1,31 +1,21 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { DatabaseService } from 'src/database/database.service';
 import { lottoQueries } from './lotto.queries';
-// eslint-disable-next-line @typescript-eslint/no-require-imports
-import seedrandom = require('seedrandom');
+import * as seedrandom from 'seedrandom';
+import { ConfigService } from '@nestjs/config';
+import { InningUtil } from './model/util.mongo';
 
 @Injectable()
 export class LottoService {
-  constructor(private readonly databaseService: DatabaseService) {}
+  constructor(
+    private readonly databaseService: DatabaseService,
+    private readonly configService: ConfigService,
+    private readonly inningUtil: InningUtil
+  ) {}
 
   async buyLotto(memberId: number) {
-    const data = await this.databaseService.query(lottoQueries.getMemberCash, [memberId]);
-    let memberCash = Number(data.rows[0].available_cash);
-    const prize: Record<number, [number, string]> = {
-      1: [500000, 'first_count'],
-      2: [200000, 'second_count'],
-      3: [140000, 'third_count'],
-      4: [100000, 'fourth_count'],
-      5: [0, 'fifth_count']
-    };
-
-    const memberHistory = await this.databaseService.query(lottoQueries.findLottoHistory, [
-      memberId
-    ]);
-    if (memberHistory.rows.length == 0) {
-      await this.databaseService.query(lottoQueries.startLottoCount, [memberId]);
-    }
-
+    const memberCash = (await this.databaseService.query(lottoQueries.getMemberCash, [memberId]))
+      .rows[0].available_cash;
     if (memberCash < 1000) {
       throw new HttpException(
         `구매자의 자본금이 복권 최소 금액 보다 적습니다. 자본금 : ${memberCash}`,
@@ -34,28 +24,57 @@ export class LottoService {
     }
 
     let unsoldData = (await this.databaseService.query(lottoQueries.getRemainTickets)).rows[0];
-    const remainCheck = Object.entries(unsoldData)
-      .filter(([key]) => key !== 'inning_id')
-      .every(([, value]) => value === 0);
-
-    if (remainCheck || !unsoldData) {
+    if (!unsoldData) {
       await this.resetLotto();
-      unsoldData = (await this.databaseService.query(lottoQueries.getRemainTickets)).rows[0];
+      unsoldData = await this.getUnsoldTickets();
     }
 
-    // 각각의 확률 계산하기
-    const total =
-      unsoldData.first_count +
-      unsoldData.second_count +
-      unsoldData.third_count +
-      unsoldData.fourth_count +
-      unsoldData.fifth_count;
+    const totalTickets = this.calculateTotalTickets(unsoldData);
+    if (totalTickets === 0) {
+      await this.resetLotto();
+      unsoldData = await this.getUnsoldTickets();
+    }
 
-    const rng = seedrandom('my-seed');
-    const myChance = Math.floor(rng() * total) + 1;
+    const rank = this.determineRank(unsoldData, totalTickets);
+    if (rank === 0) {
+      throw new HttpException('복권 등수 계산에 실패했습니다.', HttpStatus.INTERNAL_SERVER_ERROR);
+    }
 
-    let step = 0;
-    let rank = 0;
+    const updatedCash = this.calculateNewCash(memberCash, rank);
+    await this.updateGameRecords(memberId, rank, unsoldData);
+    await this.updateMemberCash(memberId, updatedCash);
+    await this.inningUtil.addLottoLog(
+      unsoldData.inning_id,
+      memberId,
+      1001 - totalTickets,
+      new Date()
+    );
+
+    return this.createResponse(rank, updatedCash);
+  }
+
+  private async resetLotto() {
+    await this.databaseService.query(lottoQueries.insertNewTickets);
+  }
+
+  private async getUnsoldTickets() {
+    const data = await this.databaseService.query(lottoQueries.getRemainTickets);
+    return data.rows[0];
+  }
+
+  private calculateTotalTickets(data: any): number {
+    return (
+      data.first_count + data.second_count + data.third_count + data.fourth_count + data.fifth_count
+    );
+  }
+
+  private determineRank(unsoldData: any, totalTickets: number): number {
+    const rng = seedrandom(
+      `${this.configService.get<string>('LOTTO_SEED')}+${totalTickets}+${unsoldData.inning_id}`
+    );
+    const myChance = Math.floor(rng() * totalTickets) + 1;
+
+    let cumulativeTickets = 0;
     const ranks = [
       { count: unsoldData.first_count, rank: 1 },
       { count: unsoldData.second_count, rank: 2 },
@@ -64,48 +83,63 @@ export class LottoService {
       { count: unsoldData.fifth_count, rank: 5 }
     ];
 
-    // 확률 도출해서 이번에 몇등인지 계산하기
-    for (const { count, rank: r } of ranks) {
-      step += count;
-      if (myChance <= step) {
-        rank = r;
-        break; // 일치하는 랭크를 찾으면 루프 종료
+    for (const { count, rank } of ranks) {
+      cumulativeTickets += count;
+      if (myChance <= cumulativeTickets) {
+        return rank;
       }
     }
-
-    if (rank == 0) {
-      throw new HttpException(
-        `확률을 계산하던 중 문제가 발생했습니다.`,
-        HttpStatus.INTERNAL_SERVER_ERROR
-      );
-    }
-
-    // 등수에 따라서 현금 계산하기
-    memberCash = memberCash - 1000 + prize[rank][0];
-
-    //위 모든행위를 다시 저장하기
-    const updateInningQuery = `UPDATE inning SET ${prize[rank][1]} = $1 WHERE inning_id = $2`;
-    const remainCount = ranks[rank - 1].count - 1;
-    // 긁은 복권 저장
-    await this.databaseService.query(updateInningQuery, [remainCount, unsoldData.inning_id]);
-    // 멤버의 현금 저장
-    await this.databaseService.query(lottoQueries.setMemberCash, [memberCash, memberId]);
-
-    // 멤버의 복권 당첨 현황 업데이트
-    const updateLottosQuery = `UPDATE lottos SET ${prize[rank][1]} = ${prize[rank][1]} + 1 WHERE member_id = $1`;
-    await this.databaseService.query(updateLottosQuery, [memberId]);
-
-    //결과 말아서 리턴해주기
-    const responseData = {
-      rank: rank,
-      remainCash: memberCash,
-      time: new Date()
-    };
-
-    return responseData;
+    return 0;
   }
 
-  async resetLotto() {
-    await this.databaseService.query(lottoQueries.insertNewTickets);
+  private calculateNewCash(memberCash: number, rank: number): number {
+    const prize: Record<number, number> = {
+      1: 400000,
+      2: 45000,
+      3: 10000,
+      4: 500,
+      5: 0
+    };
+    return memberCash - 1000 + (prize[rank] || 0);
+  }
+
+  private async updateGameRecords(memberId: number, rank: number, unsoldData: any) {
+    const prizeColumn = this.getPrizeColumn(rank);
+    const remainingTickets = Number(unsoldData[prizeColumn] - 1);
+
+    // Update ticket count in the inning
+    await this.databaseService.query(`UPDATE inning SET ${prizeColumn} = $1 WHERE inning_id = $2`, [
+      remainingTickets,
+      unsoldData.inning_id
+    ]);
+
+    // Update member's lotto history
+    await this.databaseService.query(
+      `UPDATE lottos SET ${prizeColumn} = ${prizeColumn} + 1 WHERE member_id = $1`,
+      [memberId]
+    );
+  }
+
+  private async updateMemberCash(memberId: number, updatedCash: number) {
+    await this.databaseService.query(lottoQueries.setMemberCash, [updatedCash, memberId]);
+  }
+
+  private getPrizeColumn(rank: number): string {
+    const prizeColumns: Record<number, string> = {
+      1: 'first_count',
+      2: 'second_count',
+      3: 'third_count',
+      4: 'fourth_count',
+      5: 'fifth_count'
+    };
+    return prizeColumns[rank];
+  }
+
+  private createResponse(rank: number, remainCash: number) {
+    return {
+      rank,
+      remainCash,
+      time: new Date()
+    };
   }
 }

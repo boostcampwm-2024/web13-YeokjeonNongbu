@@ -1,8 +1,9 @@
 export interface Transaction {
-  date: string;
-  item: string;
-  type: string;
-  quantity: number;
-  pricePerUnit: string;
-  totalPrice: string;
+  orderId: number;
+  cropId: number;
+  orderType: string;
+  price: number;
+  totalPrice: number;
+  createdAt: string;
+  amount: number;
 }

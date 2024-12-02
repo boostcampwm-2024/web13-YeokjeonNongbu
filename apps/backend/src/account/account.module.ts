@@ -5,11 +5,13 @@ import { AccountRepository } from './account.repository';
 import { DatabaseModule } from '../database/database.module';
 import { HasSufficientCashGuard } from './guards/hasSufficientCashGuard';
 import { HasSufficientCropGuard } from './guards/hasSufficientCropGuard';
+import { MarketModule } from '../market/market.module';
 
 @Module({
   controllers: [AccountController],
   providers: [AccountService, AccountRepository, HasSufficientCashGuard, HasSufficientCropGuard],
+
   exports: [AccountService],
-  imports: [DatabaseModule]
+  imports: [DatabaseModule, MarketModule]
 })
 export class AccountModule {}

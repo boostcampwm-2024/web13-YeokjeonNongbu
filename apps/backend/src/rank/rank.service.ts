@@ -41,7 +41,7 @@ export class RankService {
   async getRanking(nickname: string) {
     const rank = await this.redisClient.zRevRank('ranking', nickname);
     const totalmembers = await this.redisClient.zCard('ranking');
-    if (!rank) return { rank: -1, percentage: null };
+    if (typeof rank !== 'number') return { rank: -1, percentage: null };
     const percentage = ((rank + 1) / totalmembers) * 100;
     return { rank: rank + 1, percentage: percentage == 0 ? 1 : percentage.toFixed(0) };
   }

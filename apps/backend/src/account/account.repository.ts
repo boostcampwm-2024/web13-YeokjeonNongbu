@@ -19,7 +19,6 @@ export class AccountRepository {
 
     const result = await this.databaseService.query(query, values);
     return {
-      memberId: memberId,
       availableCash: result.rows[0].available_cash,
       pendingCash: result.rows[0].pending_cash,
       totalCash: result.rows[0].total_cash
@@ -112,14 +111,14 @@ export class AccountRepository {
             INSERT INTO member_crops (member_id, crop_id, available_quantity)
             VALUES ($1, $2, $3) ON CONFLICT (member_id, crop_id)
     DO
-            UPDATE SET available_quantity = member_crops.available_quantity + $3;
+            UPDATE SET available_quantity = member_crops.available_quantity + $3
         `;
 
     const values = [memberId, cropId, quantity];
     await this.databaseService.query(query, values);
   }
 
-  async getCropsByMemberId(memberId: number, cropId: number): Promise<AccountCropDto> {
+  async getCropByMemberId(memberId: number, cropId: number): Promise<AccountCropDto> {
     const query = `
             SELECT crop_id, available_quantity
             FROM member_crops
@@ -133,15 +132,59 @@ export class AccountRepository {
 
     if (!result || result.rows.length === 0) {
       return {
-        memberId: memberId,
         cropId: cropId,
         quantity: 0
       };
     }
     return {
-      memberId: memberId,
       cropId: cropId,
       quantity: result.rows[0].available_quantity || 0
     };
+  }
+
+  async getCropsByMemberId(memberId: number): Promise<AccountCropDto[]> {
+    const query = `
+            SELECT crop_id, available_quantity
+            FROM member_crops
+            WHERE member_id = $1
+        `;
+
+    const values = [memberId];
+
+    const result = await this.databaseService.query(query, values);
+    return result.rows.map(row => ({
+      cropId: row.crop_id,
+      quantity: row.available_quantity
+    }));
+  }
+
+  async decrementPendingCrop(memberId: number, cropId: number, quantity: number): Promise<void> {
+    if (quantity <= 0) {
+      throw new Error('반드시 0보다 큰 값을 감소해야 합니다.');
+    }
+    const query = `
+            UPDATE member_crops
+            SET pending_quantity   = GREATEST(pending_quantity - $1, 0),
+                available_quantity = available_quantity + $1
+            WHERE member_id = $2
+              AND crop_id = $3
+        `;
+    const values = [quantity, memberId, cropId];
+    await this.databaseService.query(query, values);
+  }
+
+  async incrementCash(memberId: number, amount: number): Promise<void> {
+    if (amount <= 0) {
+      throw new Error('반드시 0보다 큰 값을 증가해야 합니다.');
+    }
+
+    const query = `
+            UPDATE members
+            SET available_cash = available_cash + $1,
+                pending_cash   = pending_cash - $1
+            WHERE member_id = $2
+        `;
+    const values = [amount, memberId];
+    await this.databaseService.query(query, values);
   }
 }

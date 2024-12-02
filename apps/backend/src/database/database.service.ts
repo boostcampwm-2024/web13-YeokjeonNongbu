@@ -1,6 +1,6 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { Client, QueryResult } from 'pg';
+import { Client, QueryResult, types } from 'pg';
 
 @Injectable()
 export class DatabaseService implements OnModuleInit {
@@ -9,6 +9,10 @@ export class DatabaseService implements OnModuleInit {
   constructor(private configService: ConfigService) {}
 
   onModuleInit() {
+    types.setTypeParser(20, val => {
+      return Number(val);
+    });
+
     this.client = new Client({
       host: this.configService.get<string>('DB_HOST'),
       port: this.configService.get<number>('DB_PORT'),
@@ -16,6 +20,7 @@ export class DatabaseService implements OnModuleInit {
       password: this.configService.get<string>('DB_PASSWORD'),
       database: this.configService.get<string>('DB_NAME')
     });
+
     this.client
       .connect()
       .then(() => console.log('Connected to PostgreSQL database'))
@@ -29,5 +34,32 @@ export class DatabaseService implements OnModuleInit {
 
   async close() {
     await this.client.end();
+  }
+
+  async listenToChannel(channel: string, callback: (cropNotice: any) => void): Promise<void> {
+    await this.client.query(`LISTEN ${channel}`);
+    this.client.on('notification', msg => {
+      if (msg.channel === channel) {
+        try {
+          if (msg.payload) {
+            const cropNotice = JSON.parse(msg.payload);
+            callback(cropNotice);
+          }
+        } catch (error) {
+          console.log(error);
+        }
+      }
+    });
+  }
+
+  async runInTransaction(callback: (client: Client) => Promise<void>): Promise<void> {
+    try {
+      await this.client.query('BEGIN');
+      await callback(this.client);
+      await this.client.query('COMMIT');
+    } catch (error) {
+      await this.client.query('ROLLBACK');
+      throw error;
+    }
   }
 }

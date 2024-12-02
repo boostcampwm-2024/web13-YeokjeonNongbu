@@ -1,23 +1,20 @@
 import { Module } from '@nestjs/common';
 import { DatabaseModule } from 'src/database/database.module';
-import { JwtModule } from '@nestjs/jwt';
 import { LottoController } from './lotto.controller';
 import { LottoService } from './lotto.service';
-import { ConfigModule, ConfigService } from '@nestjs/config';
+import { ConfigModule } from '@nestjs/config';
+import { MongooseModule } from '@nestjs/mongoose';
+import { InningUtil } from './model/util.mongo';
+import { Inning, InningSchema } from './model/lotto.schema';
 
 @Module({
   imports: [
+    ConfigModule.forRoot(),
     DatabaseModule,
-    JwtModule.registerAsync({
-      imports: [ConfigModule],
-      inject: [ConfigService],
-      useFactory: async (configService: ConfigService) => ({
-        secret: configService.get<string>('JWT_SECRET'),
-        signOptions: { expiresIn: '1h' }
-      })
-    })
+    MongooseModule.forFeature([{ name: Inning.name, schema: InningSchema }])
   ],
   controllers: [LottoController],
-  providers: [LottoService]
+  providers: [LottoService, InningUtil],
+  exports: [InningUtil]
 })
 export class LottoModule {}

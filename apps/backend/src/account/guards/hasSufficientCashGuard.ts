@@ -7,15 +7,16 @@ export class HasSufficientCashGuard implements CanActivate {
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest();
-    const { tradingType, memberId, price, quantity } = request.body;
+    const user = request.user;
+    const { memberId } = user;
+    const { tradingType, price, quantity, totalAmount } = request.body;
 
     let hasEnoughCash = false;
     // 지정가 주문 확인
     if (tradingType === 'limit') {
       hasEnoughCash = await this.canLimitBuyOrder(price, memberId, quantity);
     } else if (tradingType === 'market') {
-      // TODO : 시장가 주문 기능 보안 예정
-      hasEnoughCash = await this.canMarketBuyOrder(price, memberId);
+      hasEnoughCash = await this.canMarketBuyOrder(totalAmount, memberId);
     }
 
     if (!hasEnoughCash) {
@@ -32,9 +33,9 @@ export class HasSufficientCashGuard implements CanActivate {
     return availableCash >= total_price;
   }
 
-  async canMarketBuyOrder(total_price: number, memberId: number): Promise<boolean> {
+  async canMarketBuyOrder(totalAmount: number, memberId: number): Promise<boolean> {
     const memberCash = await this.accountService.getCashFromMemberId(memberId);
     const availableCash = memberCash.availableCash;
-    return availableCash >= total_price;
+    return availableCash >= totalAmount;
   }
 }

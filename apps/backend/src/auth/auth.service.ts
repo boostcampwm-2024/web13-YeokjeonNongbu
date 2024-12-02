@@ -9,12 +9,14 @@ import { GoogleLoginDto } from './dto/googleLogin.dto';
 import { KakaoLoginDto } from './dto/kakaoLogin.dto';
 import { RedisClientType } from 'redis';
 import { Nullable, Optional } from '../global/utils/dataCustomType';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class AuthService {
   constructor(
     private readonly databaseService: DatabaseService,
     private readonly jwtService: JwtService,
+    private configService: ConfigService,
     @Inject('REDIS_CLIENT') private readonly redisClient: RedisClientType
   ) {}
 
@@ -79,23 +81,28 @@ export class AuthService {
 
   private async verifyUser(email: string, nickname: string) {
     const existingUser = await this.databaseService.query(authQueries.findByEmailQuery, [email]);
-    if (existingUser?.rows?.length) return existingUser.rows[0];
+    if (existingUser?.rowCount === 1) return existingUser.rows[0];
+
     const hashedPassword = await bcrypt.hash('default', 10);
+
     const newMember = await this.databaseService.query(authQueries.signUpQuery, [
       email,
       hashedPassword,
       nickname
     ]);
+
     return newMember.rows[0];
   }
 
   async SocialLogin(email: string, nickname: string) {
     const member = await this.verifyUser(email, nickname);
     const { accessToken, refreshToken } = await this.generateTokens(
-      member.rows[0].member_id,
-      member.rows[0].nickname
+      member.member_id,
+      member.nickname
     );
-    return { nickname, accessToken, refreshToken };
+    const oauthRedirectURL = this.configService.get<string>('OAUTH_CALLBACK_URL');
+    const redirectUrl = `${oauthRedirectURL}?accessToken=${accessToken}&refreshToken=${refreshToken}&nickname=${member.nickname}`;
+    return redirectUrl;
   }
 
   private async generateTokens(memberId: number, nickname: string) {
@@ -129,6 +136,11 @@ export class AuthService {
 
   async updateIntroduce(memberId: number, introduce: Nullable<string>) {
     await this.databaseService.query(authQueries.updateInroduceQuery, [introduce, memberId]);
+  }
+
+  async getIntroduce(memberId: number): Promise<string> {
+    const data = await this.databaseService.query(authQueries.getIntroduceQuery, [memberId]);
+    return data.rows[0].introduce;
   }
 
   async updateNickname(memberId: number, nickname: Nullable<string>) {

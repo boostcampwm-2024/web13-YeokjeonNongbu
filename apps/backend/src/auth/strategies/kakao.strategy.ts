@@ -8,21 +8,14 @@ export class KakaoStrategy extends PassportStrategy(Strategy, 'kakao') {
   constructor(private configService: ConfigService) {
     super({
       clientID: configService.get<string>('KAKAO_REST_API_KEY'),
-      callbackURL: configService.get<string>(
-        'KAKAO_CALLBACK_URL',
-        'http://localhost:3000/auth/kakao/redirect'
-      )
+      callbackURL: configService.get<string>('KAKAO_CALLBACK_URL')
     });
   }
 
-  async validate(
-    accessToken: string,
-    refreshToken: string,
-    profile: { nickname: string; email: string }
-  ) {
-    const { nickname, email } = profile;
-
-    const member = { email, nickname };
-    return member;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  async validate(...profile: any[]) {
+    const { username, id } = profile[2];
+    const user = { email: id, nickname: username };
+    return user;
   }
 }

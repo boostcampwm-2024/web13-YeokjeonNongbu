@@ -10,8 +10,6 @@ import * as bcrypt from 'bcrypt';
 import { authQueries } from './auth.queries';
 import { SignUpDto } from './dto/signUp.dto';
 import { LoginDto } from './dto/login.dto';
-import { GoogleLoginDto } from './dto/googleLogin.dto';
-import { KakaoLoginDto } from './dto/kakaoLogin.dto';
 
 describe('AuthService', () => {
   let authService: AuthService;
@@ -138,50 +136,6 @@ describe('AuthService', () => {
 
       expect(result).toHaveProperty('accessToken');
       expect(result).toHaveProperty('refreshToken');
-    });
-  });
-
-  describe('구글 로그인', () => {
-    it('구글 로그인에 성공한다.', async () => {
-      const googleLoginDto: GoogleLoginDto = { email: 'test@example.com', name: 'testuser' };
-
-      const mockSocialLogin = jest.spyOn(authService, 'SocialLogin');
-      mockSocialLogin.mockResolvedValueOnce({
-        nickname: 'testuser',
-        accessToken: 'mockToken',
-        refreshToken: 'mockToken'
-      });
-
-      mockJwtService.sign = jest.fn().mockReturnValue('mockToken');
-
-      const result = await authService.googleLogin(googleLoginDto);
-
-      expect(result).toHaveProperty('nickname');
-      expect(result).toHaveProperty('accessToken');
-      expect(result).toHaveProperty('refreshToken');
-      expect(mockSocialLogin).toHaveBeenCalledWith(googleLoginDto.email, googleLoginDto.name);
-    });
-  });
-
-  describe('카카오 로그인', () => {
-    it('카카오 로그인에 성공한다.', async () => {
-      const kakaoLoginDto: KakaoLoginDto = { email: 'test@example.com', nickname: 'testuser' };
-
-      const mockSocialLogin = jest.spyOn(authService, 'SocialLogin');
-      mockSocialLogin.mockResolvedValueOnce({
-        nickname: 'testuser',
-        accessToken: 'mockToken',
-        refreshToken: 'mockToken'
-      });
-
-      mockJwtService.sign = jest.fn().mockReturnValue('mockToken');
-
-      const result = await authService.kakaoLogin(kakaoLoginDto);
-
-      expect(result).toHaveProperty('nickname');
-      expect(result).toHaveProperty('accessToken');
-      expect(result).toHaveProperty('refreshToken');
-      expect(mockSocialLogin).toHaveBeenCalledWith(kakaoLoginDto.email, kakaoLoginDto.nickname);
     });
   });
 

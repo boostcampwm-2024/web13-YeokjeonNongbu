@@ -3,24 +3,13 @@ import { MailController } from './mail.controller';
 import { MailService } from './mail.service';
 import { DatabaseModule } from 'src/database/database.module';
 import { EventEmitterModule } from '@nestjs/event-emitter';
-import { JwtModule } from '@nestjs/jwt';
-import { ConfigModule, ConfigService } from '@nestjs/config';
-import { MailRedisUtil } from './util/mailRedisUtil';
+import { ConfigModule } from '@nestjs/config';
+import { MailCreateUtil } from './util/mailCreateUtil';
 
 @Module({
-  imports: [
-    DatabaseModule,
-    EventEmitterModule.forRoot(),
-    JwtModule.registerAsync({
-      imports: [ConfigModule],
-      inject: [ConfigService],
-      useFactory: async (configService: ConfigService) => ({
-        secret: configService.get<string>('JWT_SECRET'),
-        signOptions: { expiresIn: '1h' }
-      })
-    })
-  ],
+  imports: [ConfigModule.forRoot(), DatabaseModule, EventEmitterModule.forRoot()],
   controllers: [MailController],
-  providers: [MailService, MailRedisUtil]
+  providers: [MailService, MailCreateUtil],
+  exports: [MailCreateUtil]
 })
 export class MailModule {}

@@ -2,7 +2,7 @@ import { ApiProperty } from '@nestjs/swagger';
 
 export class MailDto {
   @ApiProperty({ example: '1', description: '메일 ID' })
-  mail_id: string;
+  mailId: string;
 
   @ApiProperty({
     example: '2024년 11월 18일 15시 30분에 당근을 500원에 20개 매수하였습니다.',
@@ -14,10 +14,10 @@ export class MailDto {
     example: '2024-11-11T15:00:00.000Z',
     description: '메일 생성 시간'
   })
-  created_at: string;
+  createdAt: string;
 
   @ApiProperty({ example: false, description: '읽음 여부' })
-  read_status: boolean;
+  readStatus: boolean;
 }
 
 export class MailResponseDto {

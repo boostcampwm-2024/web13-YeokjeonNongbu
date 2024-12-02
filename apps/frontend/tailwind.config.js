@@ -77,6 +77,13 @@ export default {
         '.text-shadow': {
           textShadow:
             '-3px 0px 2px #FF7B7B, 0px 3px 2px #FF7B7B, 3px 0px 2px #FF7B7B, 0px -3px 2px #FF7B7B'
+        },
+        '.scrollbar-hidden': {
+          '-ms-overflow-style': 'none',
+          'scrollbar-width': 'none'
+        },
+        '.scrollbar-hidden::-webkit-scrollbar': {
+          display: 'none'
         }
       });
     }

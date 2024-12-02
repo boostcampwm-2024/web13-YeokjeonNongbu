@@ -2,8 +2,9 @@ import { useRef, useState, useEffect } from 'react';
 import { ERASE_RADIUS, ERASE_DISTANCE, WIDTH, HEIGHT } from '@/constants/LotteryConstants';
 
 const UseLotteryCanvas = () => {
-  const [isCanvasVisible, setIsCanvasVisible] = useState(false);
-  const [isScratching, setIsScratching] = useState(false);
+  const [isCanvasVisible, setIsCanvasVisible] = useState<boolean>(false);
+  const [isScratching, setIsScratching] = useState<boolean>(false);
+  const [isClear, setIsClear] = useState<boolean>(false);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const isDrawing = useRef(false);
   const erasedCount = useRef(0);
@@ -12,6 +13,7 @@ const UseLotteryCanvas = () => {
   const resetLottery = () => {
     setIsCanvasVisible(false);
     setIsScratching(false);
+    setIsClear(false);
     erasedCount.current = 0;
   };
 
@@ -80,6 +82,7 @@ const UseLotteryCanvas = () => {
         clearCanvas(context);
         isDrawing.current = false;
         setIsScratching(false);
+        setIsClear(true);
       }
     };
 
@@ -106,6 +109,7 @@ const UseLotteryCanvas = () => {
   return {
     isCanvasVisible,
     isScratching,
+    isClear,
     canvasRef,
     setIsCanvasVisible,
     setIsScratching,

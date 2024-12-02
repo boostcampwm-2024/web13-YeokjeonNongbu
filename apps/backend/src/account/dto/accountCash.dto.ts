@@ -1,9 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 
 export class AccountCashDto {
-  @ApiProperty({ description: '멤버 ID', example: 1 })
-  memberId: number;
-
   @ApiProperty({ description: '사용 가능한 현금', example: 100000 })
   availableCash: number;
 

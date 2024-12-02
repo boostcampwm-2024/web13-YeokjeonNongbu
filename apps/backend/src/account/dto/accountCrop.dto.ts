@@ -1,9 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 
 export class AccountCropDto {
-  @ApiProperty({ description: '멤버 ID', example: 1 })
-  memberId: number;
-
   @ApiProperty({ description: '작물 ID', example: 1 })
   cropId: number;
 

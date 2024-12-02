@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
-import IntroTitle from '@/components/IntroTitle';
-import LoginModal from '@/components/LoginModal';
-import SignUpModal from '@/components/SignUpModal';
-import CloseIcon from '@/components/CloseIcon';
-import BackIcon from '@/components/BackIcon';
+import IntroTitle from '@/components/Intro/IntroTitle';
+import LoginModal from '@/components/Intro/LoginModal';
+import SignUpModal from '@/components/Intro/SignUpModal';
+import CloseIcon from '@/components/Icons/CloseIcon';
+import BackIcon from '@/components/Icons/BackIcon';
 import { ModalStep } from '@/constants/ModalConstants';
 import { isLoggedIn } from '@/services/AuthApi';
 import { useNavigate } from 'react-router-dom';

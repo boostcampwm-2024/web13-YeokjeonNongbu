@@ -1,4 +1,4 @@
-import { createBrowserRouter, RouterProvider } from 'react-router-dom';
+import { BrowserRouter, Route, Routes } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import Intro from '@/pages/Intro';
 import Main from '@/pages/Main';
@@ -6,10 +6,12 @@ import Lottery from '@/pages/Lottery';
 import MyPage from '@/pages/MyPage';
 import Ranking from '@/pages/Ranking';
 import CropMarket from '@/pages/CropMarket';
-import Header from '@/components/Header';
-import Footer from '@/components/Footer';
+import Header from '@/components/public/Header';
+import Footer from '@/components/public/Footer';
 import PrivateRoute from '@/components/ProtectRoute';
-import { UserProvider } from '@/components/UserContext';
+import OauthLogin from '@/components/Intro/OauthLogin';
+import { UserProvider } from '@/components/public/UserContext';
+import { AlertDialog } from './components/public/AlertContext';
 
 interface LayoutProps {
   path: string;
@@ -34,31 +36,62 @@ const Layout: React.FC<LayoutProps> = ({ path, children }) => {
   );
 };
 
-const routes = [
-  { path: '/', element: <Intro /> },
-  ...[
-    { path: '/main', element: <PrivateRoute element={<Main />} /> },
-    { path: '/lottery', element: <PrivateRoute element={<Lottery />} /> },
-    { path: '/mypage', element: <PrivateRoute element={<MyPage />} /> },
-    { path: '/ranking', element: <PrivateRoute element={<Ranking />} /> },
-    { path: '/cropmarket', element: <PrivateRoute element={<CropMarket />} /> }
-  ].map(route => ({
-    ...route,
-    element: <Layout path={route.path}>{route.element}</Layout>
-  }))
-];
-
-const router = createBrowserRouter(routes);
-
 function App() {
   return (
-    <div className="bg-bg-color min-h-screen">
-      <UserProvider>
+    <AlertDialog>
+      <div className="bg-bg-color min-h-screen">
         <AnimatePresence>
-          <RouterProvider router={router} />
+          <BrowserRouter>
+            <UserProvider>
+              <Routes>
+                <Route path="/" element={<Intro />} />
+                <Route path="oauth/redirect" element={<OauthLogin />} />
+                <Route
+                  path="/main"
+                  element={
+                    <Layout path="/main">
+                      <PrivateRoute element={<Main />} />
+                    </Layout>
+                  }
+                />
+                <Route
+                  path="/lottery"
+                  element={
+                    <Layout path="/lottery">
+                      <PrivateRoute element={<Lottery />} />
+                    </Layout>
+                  }
+                />
+                <Route
+                  path="/mypage"
+                  element={
+                    <Layout path="/mypage">
+                      <PrivateRoute element={<MyPage />} />
+                    </Layout>
+                  }
+                />
+                <Route
+                  path="/ranking"
+                  element={
+                    <Layout path="/ranking">
+                      <PrivateRoute element={<Ranking />} />
+                    </Layout>
+                  }
+                />
+                <Route
+                  path="/cropmarket"
+                  element={
+                    <Layout path="/cropmarket">
+                      <PrivateRoute element={<CropMarket />} />
+                    </Layout>
+                  }
+                />
+              </Routes>
+            </UserProvider>
+          </BrowserRouter>
         </AnimatePresence>
-      </UserProvider>
-    </div>
+      </div>
+    </AlertDialog>
   );
 }
 
