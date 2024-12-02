@@ -8,7 +8,13 @@ export default defineConfig({
   server: {
     host: true,
     port: 3000,
-    cors: true
+    cors: true,
+    proxy: {
+      '/ws': {
+        target: 'http://localhost:8080',
+        ws: true
+      }
+    }
   },
 
   resolve: {
