@@ -12,7 +12,7 @@ export default defineConfig({
     hmr: {
       protocol: 'wss',
       host: 'yeokjeonnongbu.shop',
-      port: 8080
+      port: 443
     },
     proxy: {
       '/ws': {
