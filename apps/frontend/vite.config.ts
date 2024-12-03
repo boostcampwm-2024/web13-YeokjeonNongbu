@@ -11,13 +11,6 @@ export default defineConfig({
     cors: true,
     hmr: {
       host: 'yeokjeonnongbu.shop'
-    },
-    proxy: {
-      '/ws': {
-        target: 'https://yeokjeonnongbu.shop',
-        changeOrigin: true,
-        ws: true
-      }
     }
   },
 
