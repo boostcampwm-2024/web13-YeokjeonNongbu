@@ -11,7 +11,7 @@ export default defineConfig({
     cors: true,
     hmr: {
       protocol: 'wss',
-      host: 'yeokjeonnongbu.shop'
+      host: 'yeokjeonnongbu.shop/ws'
     }
   },
 
