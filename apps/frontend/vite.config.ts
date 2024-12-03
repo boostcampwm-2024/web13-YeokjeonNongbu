@@ -11,11 +11,10 @@ export default defineConfig({
     cors: true,
     hmr: false,
     proxy: {
-      // WebSocket 연결을 백엔드 서버로 프록시
       '/ws': {
-        target: 'https://yeokjeonnongbu.shop',
+        target: 'http://yeokjeonnongbu.shop:8080',
         changeOrigin: true,
-        ws: true // WebSocket 프로토콜 지원
+        ws: true
       }
     }
   },
