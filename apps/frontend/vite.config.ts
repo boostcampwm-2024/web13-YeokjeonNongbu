@@ -10,8 +10,7 @@ export default defineConfig({
     port: 3000,
     cors: true,
     hmr: {
-      host: 'yeokjeonnongbu.shop',
-      port: 8080
+      host: 'yeokjeonnongbu.shop'
     },
     proxy: {
       '/ws': {
