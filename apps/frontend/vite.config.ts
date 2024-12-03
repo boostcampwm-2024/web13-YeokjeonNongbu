@@ -9,7 +9,15 @@ export default defineConfig({
     host: true,
     port: 3000,
     cors: true,
-    hmr: false
+    hmr: false,
+    proxy: {
+      // WebSocket 연결을 백엔드 서버로 프록시
+      '/ws': {
+        target: 'https://yeokjeonnongbu.shop',
+        changeOrigin: true,
+        ws: true // WebSocket 프로토콜 지원
+      }
+    }
   },
 
   resolve: {
