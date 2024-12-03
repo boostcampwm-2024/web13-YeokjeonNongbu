@@ -48,7 +48,7 @@ const CropMarket: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    const newSocket = io('wss://yeokjeonnongbu.shop', {
+    const newSocket = io('https://yeokjeonnongbu.shop', {
       auth: {
         authorization: `Bearer ${localStorage.getItem('accessToken')}`
       }
