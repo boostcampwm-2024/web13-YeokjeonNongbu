@@ -14,6 +14,7 @@ export const successMessage = {
   NICKNAME_UPDATE_SUCCESS: { code: 200, message: '닉네임이 변경되었습니다.' },
   GET_MAIL_SUCCESS: { code: 200, message: '메일 조회를 완료했습니다.' },
   DELETE_MAIL_SUCCESS: { code: 200, message: '메일 삭제를 완료했습니다.' },
+  CHECK_EMAIL_SUCCESS: { code: 200, message: '메일 중복을 확인했습니다.' },
   GET_MAIL_ALARM_SUCCESS: { code: 200, message: 'Catch alarm!.' },
   GET_TRANSACTION_SUCCESS: { code: 200, message: '거래 내역 조회를 완료했습니다.' },
   CREATE_ORDER_SUCCESS: { code: 201, message: '주문이 성공적으로 생성되었습니다.' },

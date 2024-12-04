@@ -18,12 +18,12 @@ export class ChartService implements OnModuleInit {
 
   @Cron(CronExpression.EVERY_MINUTE) // 매 분 실행
   async handleEveryMinute() {
-    console.log('분단위 췍!');
     const cropIds = (await this.databaseService.query(chartQueries.getCrops, [])).rows;
     for (const cd of cropIds) {
       const cropId = cd.crop_id;
 
       const cropData = `M${cropId}`;
+      const name = `M${cropId} name`;
       const minuteLastChart = await this.chartModel
         .findOne({ cropData })
         .sort({ 'column.x': -1 })
@@ -36,13 +36,13 @@ export class ChartService implements OnModuleInit {
           mLastTime?.toISOString()
         ])
       ).rows;
-      const mColumn = await this.makeRawData(mTransactions, 1, mLastTime, mLastValue);
+      const column = await this.makeRawData(mTransactions, 1, mLastTime, mLastValue);
       const existingMinuteChart = await this.chartModel.findOne({ cropData });
       if (existingMinuteChart) {
-        existingMinuteChart.column.push(...mColumn!);
+        existingMinuteChart.column.push(...column!);
         await existingMinuteChart.save();
       } else {
-        const chart = new this.chartModel({ cropData, mColumn, name });
+        const chart = new this.chartModel({ cropData, column, name });
         await chart.save();
       }
 
@@ -54,11 +54,11 @@ export class ChartService implements OnModuleInit {
 
   @Cron(CronExpression.EVERY_HOUR) // 매 시간 실행
   async handleEveryHour() {
-    console.log('시간단위 췍!');
     const cropIds = (await this.databaseService.query(chartQueries.getCrops, [])).rows;
     for (const cd of cropIds) {
       const cropId = cd.crop_id;
       const cropData = `H${cropId}`;
+      const name = `H${cropId} name`;
       const hourLastChart = await this.chartModel
         .findOne({ cropData })
         .sort({ 'column.x': -1 })
@@ -71,13 +71,13 @@ export class ChartService implements OnModuleInit {
           hLastTime?.toISOString()
         ])
       ).rows;
-      const hColumn = await this.makeRawData(hTransactions, 60, hLastTime, hLastValue);
+      const column = await this.makeRawData(hTransactions, 60, hLastTime, hLastValue);
       const existingHourChart = await this.chartModel.findOne({ cropData });
       if (existingHourChart) {
-        existingHourChart.column.push(...hColumn!);
+        existingHourChart.column.push(...column!);
         await existingHourChart.save();
       } else {
-        const chart = new this.chartModel({ cropData, hColumn, name });
+        const chart = new this.chartModel({ cropData, column, name });
         await chart.save();
       }
 
@@ -90,10 +90,8 @@ export class ChartService implements OnModuleInit {
   async onModuleInit() {
     const isExist = await this.chartModel.findOne();
     if (!isExist) {
-      console.log('차트 데이터를 초기 생성합니다.');
       await this.checkSituation();
     } else {
-      console.log('이미 있당게요.');
       await this.checkSituationFrom();
     }
   }
@@ -105,14 +103,17 @@ export class ChartService implements OnModuleInit {
       const transactions = (
         await this.databaseService.query(chartQueries.getAllTransactionsData, [cropId])
       ).rows;
-      const mColumn = await this.makeRawData(transactions);
+      let column = await this.makeRawData(transactions);
       let cropData = `M${cropId}`;
-      const mChart = new this.chartModel({ cropData, mColumn, name });
+      let name = `M${cropId} name`;
+      const mChart = new this.chartModel({ cropData, column, name });
       await mChart.save();
 
-      const hColumn = await this.makeRawData(transactions, 60);
+      column = [];
+      column = await this.makeRawData(transactions, 60);
       cropData = `H${cropId}`;
-      const hChart = new this.chartModel({ cropData, hColumn, name });
+      name = `H${cropId} name`;
+      const hChart = new this.chartModel({ cropData, column, name });
       await hChart.save();
     }
   }
@@ -123,6 +124,7 @@ export class ChartService implements OnModuleInit {
       const cropId = cd.crop_id;
 
       let cropData = `M${cropId}`;
+      let name = `M${cropId} name`;
       const minuteLastChart = await this.chartModel
         .findOne({ cropData })
         .sort({ 'column.x': -1 })
@@ -135,17 +137,18 @@ export class ChartService implements OnModuleInit {
           mLastTime?.toISOString()
         ])
       ).rows;
-      const mColumn = await this.makeRawData(mTransactions, 1, mLastTime, mLastValue);
+      let column = await this.makeRawData(mTransactions, 1, mLastTime, mLastValue);
       const existingMinuteChart = await this.chartModel.findOne({ cropData });
       if (existingMinuteChart) {
-        existingMinuteChart.column.push(...mColumn!);
+        existingMinuteChart.column.push(...column!);
         await existingMinuteChart.save();
       } else {
-        const chart = new this.chartModel({ cropData, mColumn, name });
+        const chart = new this.chartModel({ cropData, column, name });
         await chart.save();
       }
-
+      column = [];
       cropData = `H${cropId}`;
+      name = `H${cropId} name`;
       const hourLastChart = await this.chartModel
         .findOne({ cropData })
         .sort({ 'column.x': -1 })
@@ -158,13 +161,13 @@ export class ChartService implements OnModuleInit {
           hLastTime?.toISOString()
         ])
       ).rows;
-      const hColumn = await this.makeRawData(hTransactions, 60, hLastTime, hLastValue);
+      column = await this.makeRawData(hTransactions, 60, hLastTime, hLastValue);
       const existingHourChart = await this.chartModel.findOne({ cropData });
       if (existingHourChart) {
-        existingHourChart.column.push(...hColumn!);
+        existingHourChart.column.push(...column!);
         await existingHourChart.save();
       } else {
-        const chart = new this.chartModel({ cropData, hColumn, name });
+        const chart = new this.chartModel({ cropData, column, name });
         await chart.save();
       }
     }
@@ -195,14 +198,24 @@ export class ChartService implements OnModuleInit {
 
     while (currentTime <= endTime) {
       const transactionsForMinute = transactions.filter(transaction => {
-        const transactionTime = new Date(transaction.created_at);
-        return (
-          transactionTime.getUTCFullYear() === currentTime.getUTCFullYear() &&
-          transactionTime.getUTCMonth() === currentTime.getUTCMonth() &&
-          transactionTime.getUTCDate() === currentTime.getUTCDate() &&
-          transactionTime.getUTCHours() === currentTime.getUTCHours() &&
-          transactionTime.getUTCMinutes() === currentTime.getUTCMinutes()
-        );
+        if (factor === 1) {
+          const transactionTime = new Date(transaction.created_at);
+          return (
+            transactionTime.getUTCFullYear() === currentTime.getUTCFullYear() &&
+            transactionTime.getUTCMonth() === currentTime.getUTCMonth() &&
+            transactionTime.getUTCDate() === currentTime.getUTCDate() &&
+            transactionTime.getUTCHours() === currentTime.getUTCHours() &&
+            transactionTime.getUTCMinutes() === currentTime.getUTCMinutes()
+          );
+        } else {
+          const transactionTime = new Date(transaction.created_at);
+          return (
+            transactionTime.getUTCFullYear() === currentTime.getUTCFullYear() &&
+            transactionTime.getUTCMonth() === currentTime.getUTCMonth() &&
+            transactionTime.getUTCDate() === currentTime.getUTCDate() &&
+            transactionTime.getUTCHours() === currentTime.getUTCHours()
+          );
+        }
       });
       // 해당 1분에 transaction이 없으면 y = 500
 

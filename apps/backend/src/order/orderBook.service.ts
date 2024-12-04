@@ -3,6 +3,7 @@ import { RedisClientType } from 'redis';
 import { OrderBookDto } from './dto/orderBook.dto';
 import { OrderType, TradingType } from './enums/orderType';
 import { OrderRepository } from './order.repository';
+import { MarketOrderDto } from './dto/marketOrder.dto';
 
 @Injectable()
 export class OrderBookService {
@@ -94,6 +95,26 @@ export class OrderBookService {
     const limitOrders = await this.getOrdersFromRedis(cropId, OrderType.SELL, TradingType.LIMIT);
     const marketOrders = await this.getOrdersFromRedis(cropId, OrderType.SELL, TradingType.MARKET);
     return [...marketOrders, ...limitOrders];
+  }
+
+  async getLimitOrdersFromRedis(cropId: number): Promise<OrderBookDto[]> {
+    const buyOrders = await this.getOrdersFromRedis(cropId, OrderType.BUY, TradingType.LIMIT);
+    const sellOrders = await this.getOrdersFromRedis(cropId, OrderType.SELL, TradingType.LIMIT);
+    return [...buyOrders, ...sellOrders];
+  }
+
+  async isMarketOrderAvailable(marketOrderDto: MarketOrderDto): Promise<boolean> {
+    const orders = await this.getLimitOrdersFromRedis(marketOrderDto.cropId);
+    return this.hasAvailableOrders(marketOrderDto.orderType, orders);
+  }
+
+  private hasAvailableOrders(orderType: OrderType, orders: OrderBookDto[]): boolean {
+    if (orderType === OrderType.BUY) {
+      return orders.some(order => order.orderType === OrderType.SELL);
+    } else if (orderType === OrderType.SELL) {
+      return orders.some(order => order.orderType === OrderType.BUY);
+    }
+    return false;
   }
 
   private async getOrdersFromRedis(

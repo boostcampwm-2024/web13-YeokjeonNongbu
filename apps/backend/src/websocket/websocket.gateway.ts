@@ -17,13 +17,16 @@ export class WebsocketGateway implements OnGatewayInit, OnGatewayConnection, OnG
   @WebSocketServer() server: Server;
 
   private clients: Map<string, string> = new Map();
+  private redisSubscriber: RedisClientType;
 
   constructor(
     private readonly databaseService: DatabaseService,
     private readonly jwtService: JwtService,
     private readonly chartService: ChartService,
     @Inject('REDIS_CLIENT') private readonly redisClient: RedisClientType
-  ) {}
+  ) {
+    this.redisSubscriber = this.redisClient.duplicate();
+  }
 
   async onModuleInit() {
     await this.initializePubSub();
@@ -43,9 +46,7 @@ export class WebsocketGateway implements OnGatewayInit, OnGatewayConnection, OnG
       const decoded = await this.jwtService.verifyAsync(token);
       const { memberId, nickname } = decoded;
 
-      client.data.memberId = memberId;
-      client.data.nickname = nickname;
-
+      client.data = { memberId, nickname };
       this.clients.set(memberId, client.id);
       await this.sendMemberCropsData(client, memberId);
     } catch (error) {
@@ -53,8 +54,7 @@ export class WebsocketGateway implements OnGatewayInit, OnGatewayConnection, OnG
       console.log(error);
     }
 
-    client.on('join', async data => {
-      const { cropId } = data;
+    client.on('join', async ({ cropId }) => {
       if (cropId) {
         client.join(String(cropId));
         this.sendCurrentMarketState(client, cropId);
@@ -66,26 +66,32 @@ export class WebsocketGateway implements OnGatewayInit, OnGatewayConnection, OnG
 
   handleDisconnect(client: Socket) {
     this.clients.delete(client.id);
-    console.log(`Client disconnected: ${client.id}`);
   }
 
   async initializePubSub() {
-    const subscriber = this.redisClient.duplicate();
     try {
-      await subscriber.connect();
+      await this.redisSubscriber.connect();
 
       await this.databaseService.listenToChannel('member_crops_update', async payload => {
         const memberId = payload[0].member_id;
+        if (!memberId) return;
         const query = `
                 SELECT crop_id, available_quantity, pending_quantity, total_quantity
                 FROM member_crops
                 WHERE member_id = $1
             `;
         const crops = await this.databaseService.query(query, [memberId]);
-        this.cropDataTransfer(memberId, crops.rows);
+        const data = crops.rows.map(crop => ({
+          cropId: crop.crop_id,
+          availableQuantity: crop.available_quantity,
+          pendingQuantity: crop.pending_quantity,
+          totalQuantity: crop.total_quantity
+        }));
+
+        this.cropDataTransfer(memberId, data);
       });
 
-      await subscriber.pSubscribe('__keyspace@0__:orderBook:*', async (_, message) => {
+      await this.redisSubscriber.pSubscribe('__keyspace@0__:orderBook:*', async (_, message) => {
         const match = message.match(/orderBook:(\d+):.*/);
         if (match) {
           const cropId = match[1];
@@ -93,7 +99,7 @@ export class WebsocketGateway implements OnGatewayInit, OnGatewayConnection, OnG
         }
       });
 
-      await subscriber.pSubscribe('__keyspace@0__:crop:price', () => {
+      await this.redisSubscriber.pSubscribe('__keyspace@0__:crop:price', () => {
         this.cropPricesTransfer();
       });
     } catch (error) {
@@ -121,39 +127,35 @@ export class WebsocketGateway implements OnGatewayInit, OnGatewayConnection, OnG
   }
 
   private async handleRedisUpdate(cropId: string) {
-    const buyOrders = await this.redisClient.zRange(`orderBook:${cropId}:buy:limit`, 0, -1);
-    const sellOrders = await this.redisClient.zRange(`orderBook:${cropId}:sell:limit`, 0, -1);
-    const price = await this.redisClient.hGet(`crop:price`, String(cropId));
+    const [buyOrders, sellOrders, nowPrice] = await Promise.all([
+      this.redisClient.zRange(`orderBook:${cropId}:buy:limit`, 0, -1),
+      this.redisClient.zRange(`orderBook:${cropId}:sell:limit`, 0, -1),
+      this.redisClient.hGet('crop:price', String(cropId))
+    ]);
 
-    const aggregatedBuyOrders = this.aggregateOrders(buyOrders);
-    const aggregatedSellOrders = this.aggregateOrders(sellOrders);
+    const data = {
+      buyOrders: this.aggregateOrders(buyOrders),
+      sellOrders: this.aggregateOrders(sellOrders),
+      nowPrice: Number(nowPrice)
+    };
 
-    this.notifyClients(cropId, {
-      buyOrders: aggregatedBuyOrders,
-      sellOrders: aggregatedSellOrders,
-      nowPrice: Number(price)
-    });
+    this.notifyClients(cropId, data);
   }
 
   private aggregateOrders(rawOrders: string[]): { price: number; quantity: number }[] {
-    const orderMap = new Map<number, number>();
-
-    rawOrders.forEach(orderString => {
-      const order = JSON.parse(orderString);
-      const price = order.price;
-      const quantity = order.unfilledQuantity;
-
-      if (orderMap.has(price)) {
-        orderMap.set(price, orderMap.get(price)! + quantity);
-      } else {
-        orderMap.set(price, quantity);
-      }
-    });
-
-    return Array.from(orderMap.entries()).map(([price, quantity]) => ({
-      price,
-      quantity
-    }));
+    return rawOrders.reduce(
+      (acc, orderString) => {
+        const { price, unfilledQuantity } = JSON.parse(orderString);
+        const existingOrder = acc.find(order => order.price === price);
+        if (existingOrder) {
+          existingOrder.quantity += unfilledQuantity;
+        } else {
+          acc.push({ price, quantity: unfilledQuantity });
+        }
+        return acc;
+      },
+      [] as { price: number; quantity: number }[]
+    );
   }
 
   async notifyClients(cropId: string, data: any) {
@@ -188,9 +190,11 @@ export class WebsocketGateway implements OnGatewayInit, OnGatewayConnection, OnG
   }
 
   async sendCurrentMarketState(client: Socket, cropId: string) {
-    const buyOrders = await this.redisClient.zRange(`orderBook:${cropId}:buy:limit`, 0, -1);
-    const sellOrders = await this.redisClient.zRange(`orderBook:${cropId}:sell:limit`, 0, -1);
-    const nowPrice = await this.redisClient.hGet('crop:price', String(cropId));
+    const [buyOrders, sellOrders, nowPrice] = await Promise.all([
+      this.redisClient.zRange(`orderBook:${cropId}:buy:limit`, 0, -1),
+      this.redisClient.zRange(`orderBook:${cropId}:sell:limit`, 0, -1),
+      this.redisClient.hGet('crop:price', String(cropId))
+    ]);
 
     const aggregatedBuyOrders = this.aggregateOrders(buyOrders);
     const aggregatedSellOrders = this.aggregateOrders(sellOrders);

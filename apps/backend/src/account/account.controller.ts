@@ -32,7 +32,7 @@ export class AccountController {
   @accountCropValueDecorator()
   async getCropsValueFromMemberId(@User() user: { memberId: number }) {
     const { memberId } = user;
-    const cropsByMember = await this.accountService.getCropsFromMemberId(memberId);
+    const cropsByMember = await this.accountService.getTotalCropsFromMemberId(memberId);
     const cropPrices = await this.marketService.getAllCropPrices();
     const data = cropsByMember.reduce((acc, crop) => {
       const cropData = cropPrices.find(cropData => cropData.cropId === crop.cropId);
@@ -61,12 +61,12 @@ export class AccountController {
   }
 
   @Get('crops')
-  @ApiOperation({ summary: '회원의 전체 보유 작물 정보 조회' })
+  @ApiOperation({ summary: '회원의 총 보유 작물 정보 조회' })
   @accountCropsDecorator()
   async getCropsFromMemberId(@User() user: { memberId: number }) {
     const { memberId } = user;
     const cropInfo = await this.marketService.getCropsInfo();
-    const cropsByMember = await this.accountService.getCropsFromMemberId(memberId);
+    const cropsByMember = await this.accountService.getTotalCropsFromMemberId(memberId);
 
     const crops = cropInfo.map(crop => {
       const memberCrop = cropsByMember.find(memberCrop => memberCrop.cropId === crop.cropId);

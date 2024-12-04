@@ -142,7 +142,23 @@ export class AccountRepository {
     };
   }
 
-  async getCropsByMemberId(memberId: number): Promise<AccountCropDto[]> {
+  async getTotalCropsByMemberId(memberId: number): Promise<AccountCropDto[]> {
+    const query = `
+            SELECT crop_id, total_quantity
+            FROM member_crops
+            WHERE member_id = $1
+        `;
+
+    const values = [memberId];
+
+    const result = await this.databaseService.query(query, values);
+    return result.rows.map(row => ({
+      cropId: row.crop_id,
+      quantity: row.total_quantity
+    }));
+  }
+
+  async getAvailableCropsByMemberId(memberId: number): Promise<AccountCropDto[]> {
     const query = `
             SELECT crop_id, available_quantity
             FROM member_crops

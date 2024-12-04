@@ -18,6 +18,7 @@ import { logoutResponseDecorator } from './decorator/logout.decorator';
 import { updateIntroduceResponseDecorator } from './decorator/updateIntroduce.decorator';
 import { updateNicknameResponseDecorator } from './decorator/updateNickname.decorator';
 import { accountIntroduceDecorator } from './decorator/getIntroduce.decorator';
+import { EmailCheckDto } from './dto/emailCheck.dto';
 
 @Controller('api/auth')
 export class AuthController {
@@ -110,5 +111,13 @@ export class AuthController {
     const { nickname } = updateNicknameDto;
     await this.authService.updateNickname(memberId, nickname);
     return successhandler(successMessage.NICKNAME_UPDATE_SUCCESS);
+  }
+
+  @Public()
+  @Post('emailcheck')
+  async emailCheck(@Body() emailCheckDto: EmailCheckDto) {
+    const { email } = emailCheckDto;
+    await this.authService.emailCheck(email);
+    return successhandler(successMessage.CHECK_EMAIL_SUCCESS);
   }
 }

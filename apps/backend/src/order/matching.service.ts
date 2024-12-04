@@ -198,16 +198,13 @@ export class MatchingService {
     sellOrder: OrderBookDto,
     quantity: number
   ): Promise<void> {
-    await this.processOrderMatch(buyOrder, sellOrder, quantity);
-    await this.updateMarketPrice(cropId, buyOrder, sellOrder);
+    const matchedPrice = this.determineMatchPrice(buyOrder, sellOrder);
+    await this.processOrderMatch(buyOrder, sellOrder, quantity, matchedPrice);
+    await this.updateMarketPrice(cropId, matchedPrice);
   }
 
-  private async updateMarketPrice(
-    cropId: number,
-    buyOrder: OrderBookDto,
-    sellOrder: OrderBookDto
-  ): Promise<void> {
-    const price = sellOrder.tradingType === TradingType.MARKET ? buyOrder.price! : sellOrder.price!;
+  private async updateMarketPrice(cropId: number, matchedPrice: number): Promise<void> {
+    const price = matchedPrice;
     await this.marketService.saveCropPrice({ cropId, price });
     await this.marketService.setCropPriceToRedis({ cropId, price });
   }
@@ -290,10 +287,9 @@ export class MatchingService {
   private async processOrderMatch(
     buyOrder: OrderBookDto,
     sellOrder: OrderBookDto,
-    matchedQuantity: number
+    matchedQuantity: number,
+    matchedPrice: number
   ): Promise<void> {
-    const matchedPrice = this.determineMatchPrice(buyOrder, sellOrder);
-
     await this.orderService.runInTransaction(async () => {
       try {
         // 주문 오더 상태 업데이트
@@ -399,7 +395,7 @@ export class MatchingService {
           );
         }
 
-        if (buyOrder.tradingType == TradingType.LIMIT && sellOrder.unfilledQuantity! === 0) {
+        if (sellOrder.tradingType == TradingType.LIMIT && sellOrder.unfilledQuantity! === 0) {
           await this.orderBookService.removeOrder(
             sellOrder.memberId,
             sellOrder.cropId,

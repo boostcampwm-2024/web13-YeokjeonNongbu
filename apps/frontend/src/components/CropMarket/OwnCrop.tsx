@@ -31,8 +31,8 @@ const OwnCrop: React.FC<OwnCropProps> = ({ ownCrop, cropNameList, nowPrice }) =>
               return (
                 <tr key={cropId}>
                   <td>{cropDisplayName}</td>
-                  <td>{totalQuantity}</td>
-                  <td>￦ {price * totalQuantity}</td>
+                  <td>{totalQuantity.toLocaleString()}</td>
+                  <td>￦ {(price * totalQuantity).toLocaleString()}</td>
                 </tr>
               );
             })}

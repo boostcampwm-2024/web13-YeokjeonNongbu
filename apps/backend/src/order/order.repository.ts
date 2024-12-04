@@ -197,7 +197,7 @@ export class OrderRepository {
             SELECT *
             FROM orders
             WHERE member_id = $1
-              AND status = 'pending'
+              AND status IN ('pending', 'partially_filled')
         `;
     const values = [memberId];
     try {

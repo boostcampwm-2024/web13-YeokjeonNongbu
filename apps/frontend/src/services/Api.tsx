@@ -48,6 +48,7 @@ api.interceptors.response.use(
     if (error.response && error.response.status === 401) {
       localStorage.clear();
       alert('액세스 토큰이 만료되었습니다. 로그아웃되었습니다.');
+      window.location.href = '/';
     }
 
     return Promise.reject(error);

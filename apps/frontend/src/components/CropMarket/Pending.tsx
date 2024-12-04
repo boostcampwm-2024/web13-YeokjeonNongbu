@@ -43,7 +43,9 @@ const Pending: React.FC<PendingProps> = ({ cropNameList }) => {
     fetchPending();
   }, []);
 
-  const handleCancel = async (order: MergedPendingData) => {
+  const handleCancel = async (e: React.MouseEvent<HTMLButtonElement>, order: MergedPendingData) => {
+    e.currentTarget.blur();
+
     try {
       const data = {
         cropId: order.cropId,
@@ -89,7 +91,7 @@ const Pending: React.FC<PendingProps> = ({ cropNameList }) => {
         <div>{error}</div>
       ) : (
         <>
-          <div className="grid grid-cols-[1.2fr_2fr_1fr_1fr_auto] gap-1 font-semibold bg-gray-800 py-1 px-1">
+          <div className="grid grid-cols-[1.2fr_2fr_1fr_1fr_auto] gap-1 font-semibold py-1 px-1">
             <div className="text-center">작물명</div>
             <div className="text-center">주문시간</div>
             <div className="text-center">수량</div>
@@ -105,12 +107,14 @@ const Pending: React.FC<PendingProps> = ({ cropNameList }) => {
               >
                 <div className="text-center">{cropList[pending.cropName]}</div>
                 <div className="text-center">{formatDate(pending.time)}</div>
-                <div className="text-center">{pending.quantity}</div>
+                <div className="text-center">{pending.unfilledQuantity.toLocaleString()}</div>
                 <div className="text-center">{pending.price.toLocaleString()}</div>
                 <div className="text-center">
                   <button
-                    className="px-1 bg-green-500 text-white rounded text-[9px]"
-                    onClick={() => handleCancel(pending)}
+                    className={`px-1 rounded text-[9px] ${
+                      pending.orderType === 'buy' ? 'bg-red-500' : 'bg-blue-500'
+                    } text-white`}
+                    onClick={e => handleCancel(e, pending)}
                   >
                     취소
                   </button>

@@ -6,7 +6,7 @@ export const getOrderHistory = async () => {
   try {
     const response = await api.get('order');
 
-    if (response.data.code === 201) {
+    if (response.data.code === 200) {
       const history: HistoryData[] = response.data.data;
 
       return {
@@ -44,6 +44,8 @@ export const postLimitBuyOrder = async (data: Order) => {
 
     if (response.data.code === 201) {
       return { success: true, message: response.data.message };
+    } else if (response.data.code === 403) {
+      return { sucess: false, message: response.data.message };
     }
 
     return { success: false, message: '알 수 없는 오류가 발생했습니다.' };
@@ -58,6 +60,8 @@ export const postLimitSellOrder = async (data: Order) => {
 
     if (response.data.code === 201) {
       return { success: true, message: response.data.message };
+    } else if (response.data.code === 403) {
+      return { sucess: false, message: response.data.message };
     }
 
     return { success: false, message: '알 수 없는 오류가 발생했습니다.' };
@@ -72,6 +76,8 @@ export const postMarketBuyOrder = async (data: Order) => {
 
     if (response.data.code === 201) {
       return { success: true, message: response.data.message };
+    } else if (response.data.code === 400 || response.data.code === 403) {
+      return { success: true, message: response.data.message };
     }
 
     return { success: false, message: '알 수 없는 오류가 발생했습니다.' };
@@ -84,7 +90,9 @@ export const postMarketSellOrder = async (data: Order) => {
   try {
     const response = await api.post('order/sell/market', data);
 
-    if (response.data.code === 200) {
+    if (response.data.code === 201) {
+      return { success: true, message: response.data.message };
+    } else if (response.data.code === 400 || response.data.code === 403) {
       return { success: true, message: response.data.message };
     }
 

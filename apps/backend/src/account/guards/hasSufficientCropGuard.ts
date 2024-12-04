@@ -1,4 +1,10 @@
-import { CanActivate, ExecutionContext, ForbiddenException, Injectable } from '@nestjs/common';
+import {
+  CanActivate,
+  ExecutionContext,
+  HttpException,
+  HttpStatus,
+  Injectable
+} from '@nestjs/common';
 import { AccountService } from '../account.service';
 
 @Injectable()
@@ -20,7 +26,7 @@ export class HasSufficientCropGuard implements CanActivate {
     }
 
     if (!hasEnoughCrop) {
-      throw new ForbiddenException('작물을 충분히 보유하고 있지 않습니다.');
+      throw new HttpException('작물을 충분히 보유하고 있지 않습니다.', HttpStatus.FORBIDDEN);
     }
 
     return true;

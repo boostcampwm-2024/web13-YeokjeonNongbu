@@ -64,10 +64,10 @@ export class OrderController {
       const { memberId } = user;
       const orderDto = DtoTransformer.mapToOrderDto(limitOrderDto, memberId);
       await this.orderService.saveOrder(orderDto);
-      await this.accountService.updateCashByPlacingOrder(
+      await this.accountService.updateCropByPlacingSellOrder(
         orderDto.memberId,
-        orderDto.quantity! * orderDto.price!,
-        orderDto.orderType
+        orderDto.cropId,
+        orderDto.quantity!
       );
 
       await this.matchingService.matchOrders(limitOrderDto.cropId);
@@ -86,6 +86,13 @@ export class OrderController {
     @User() user: { memberId: number },
     @Body() marketOrderDto: MarketOrderDto
   ) {
+    if (!(await this.orderBookService.isMarketOrderAvailable(marketOrderDto))) {
+      return {
+        code: HttpStatus.BAD_REQUEST,
+        message: '매도 주문이 없습니다.'
+      };
+    }
+
     try {
       const { memberId } = user;
       const orderDto = DtoTransformer.mapToOrderDto(marketOrderDto, memberId);
@@ -95,7 +102,6 @@ export class OrderController {
         orderDto.totalAmount!,
         orderDto.orderType
       );
-
       await this.matchingService.matchOrders(marketOrderDto.cropId);
       return successhandler(successMessage.CREATE_ORDER_SUCCESS);
     } catch (error) {
@@ -115,6 +121,13 @@ export class OrderController {
     @User() user: { memberId: number },
     @Body() marketOrderDto: MarketOrderDto
   ) {
+    if (!(await this.orderBookService.isMarketOrderAvailable(marketOrderDto))) {
+      return {
+        code: HttpStatus.BAD_REQUEST,
+        message: '매수 주문이 없습니다.'
+      };
+    }
+
     try {
       const { memberId } = user;
       const orderDto = DtoTransformer.mapToOrderDto(marketOrderDto, memberId);

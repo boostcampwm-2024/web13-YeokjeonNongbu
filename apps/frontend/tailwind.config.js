@@ -25,7 +25,6 @@ export default {
 
         // 회색 계열
         'blue-gray': '#64748B',
-        gray: '#C9C9C9',
 
         // 기타 색상
         black: '#000000',

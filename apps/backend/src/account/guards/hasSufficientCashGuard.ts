@@ -1,4 +1,10 @@
-import { CanActivate, ExecutionContext, ForbiddenException, Injectable } from '@nestjs/common';
+import {
+  CanActivate,
+  ExecutionContext,
+  HttpException,
+  HttpStatus,
+  Injectable
+} from '@nestjs/common';
 import { AccountService } from '../account.service';
 
 @Injectable()
@@ -20,7 +26,7 @@ export class HasSufficientCashGuard implements CanActivate {
     }
 
     if (!hasEnoughCash) {
-      throw new ForbiddenException('사용 가능한 현금이 부족합니다.');
+      throw new HttpException('사용 가능한 현금이 부족합니다.', HttpStatus.FORBIDDEN);
     }
 
     return true;

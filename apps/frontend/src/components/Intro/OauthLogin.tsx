@@ -1,9 +1,6 @@
 import { useEffect } from 'react';
-import { useUser } from '@/components/public/UserContext';
 
 const OauthLogin: React.FC = () => {
-  const { setNickname } = useUser();
-
   useEffect(() => {
     const handleCallback = () => {
       const urlParams = new URLSearchParams(window.location.search);
@@ -14,7 +11,7 @@ const OauthLogin: React.FC = () => {
       if (accessToken && refreshToken && nickname) {
         localStorage.setItem('accessToken', accessToken);
         localStorage.setItem('refreshToken', refreshToken);
-        setNickname(nickname);
+        localStorage.setItem('nickname', nickname);
 
         setTimeout(() => {
           window.location.href = '/main';

@@ -1,8 +1,7 @@
-import { useState, useContext } from 'react';
+import { useState, useContext, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ModalStep } from '@/constants/ModalConstants';
 import { login } from '@/services/AuthApi';
-import { useUser } from '@/components/public/UserContext';
 import { AlertContext } from '@/components/public/AlertContext';
 
 interface LoginProps {
@@ -14,7 +13,6 @@ const LoginModal: React.FC<LoginProps> = ({ setModalStep }) => {
   const [email, setEmail] = useState<string>('');
   const [password, setPassword] = useState<string>('');
   const [error, setError] = useState<string | null>(null);
-  const { setNickname } = useUser();
   const { alert } = useContext(AlertContext);
 
   const handleLogin = async () => {
@@ -33,7 +31,6 @@ const LoginModal: React.FC<LoginProps> = ({ setModalStep }) => {
     try {
       const response = await login({ email, password });
       if (response.success) {
-        setNickname(response.nickname);
         navigate('/main');
       } else {
         await alert(response.message || '로그인 중 오류가 발생했습니다. 다시 시도해주세요.');
@@ -50,6 +47,20 @@ const LoginModal: React.FC<LoginProps> = ({ setModalStep }) => {
   const handleKakao = async () => {
     window.location.href = `${import.meta.env.VITE_BASE_URL}/api/auth/kakao`;
   };
+
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Enter') {
+        handleLogin();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [handleLogin]);
 
   return (
     <>

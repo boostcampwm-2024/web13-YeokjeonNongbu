@@ -52,8 +52,11 @@ const Intro: React.FC = () => {
       ></button>
 
       {modalStep !== ModalStep.None && (
-        <div className="fixed inset-0 flex items-center justify-center">
-          <div className="bg-bg-color opacity-95 p-8 rounded-lg shadow-lg flex flex-col items-center min-w-[500px]">
+        <div className="fixed inset-0 flex items-center justify-center" onClick={closeModal}>
+          <div
+            className="bg-bg-color opacity-95 p-8 rounded-lg shadow-lg flex flex-col items-center min-w-[500px]"
+            onClick={e => e.stopPropagation()}
+          >
             <div className="flex items-center w-full">
               <BackIcon
                 onClick={() =>

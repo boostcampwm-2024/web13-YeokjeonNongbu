@@ -13,6 +13,8 @@ export const getTop5 = async () => {
         message: response.data.message,
         top5: top5
       };
+    } else if (response.data.code === 401) {
+      return { success: false, message: response.data.message };
     }
 
     return { success: false, message: '알 수 없는 오류가 발생했습니다.' };
@@ -34,6 +36,8 @@ export const getMyRank = async () => {
         rank: rank,
         percentage: percentage
       };
+    } else if (response.data.code === 401) {
+      return { success: false, message: response.data.message };
     }
 
     return { success: false, message: '알 수 없는 오류가 발생했습니다.' };

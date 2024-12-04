@@ -10,17 +10,34 @@ export const login = async (data: Login) => {
       const { accessToken, refreshToken, nickname } = response.data.data;
       localStorage.setItem('accessToken', accessToken);
       localStorage.setItem('refreshToken', refreshToken);
+      localStorage.setItem('nickname', nickname);
 
       return {
         success: true,
         message: response.data.message,
         nickname: nickname
       };
+    } else if (response.data.code === 400 || response.data.code === 401) {
+      return { success: false, message: response.data.message };
     }
 
     return { success: false, message: '알 수 없는 오류가 발생했습니다.' };
   } catch (error) {
     return handleError(error, '로그인 중 오류가 발생했습니다.');
+  }
+};
+
+export const dupAccount = async (email: string) => {
+  try {
+    const response = await api.post('auth/emailcheck', { email });
+
+    if (response.data.code === 200) {
+      return { success: true, message: response.data.message };
+    }
+
+    return { success: false, message: '알 수 없는 오류가 발생했습니다.' };
+  } catch (error) {
+    return handleError(error, '회원가입 중 오류가 발생했습니다.');
   }
 };
 
@@ -30,6 +47,8 @@ export const signUp = async (data: SignUp) => {
 
     if (response.data.code === 201) {
       return { success: true, message: response.data.message };
+    } else if (response.data.code === 400) {
+      return { success: false, message: response.data.message };
     }
 
     return { success: false, message: response.data.message };
@@ -48,6 +67,8 @@ export const logout = async () => {
       localStorage.removeItem('nickname');
 
       return { success: true, message: response.data.message };
+    } else if (response.data.code === 401) {
+      return { success: false, message: response.data.message };
     }
 
     return { success: false, message: '알 수 없는 오류가 발생했습니다.' };
@@ -82,7 +103,10 @@ export const updateNickname = async (data: Nickname) => {
 
     if (response.data.code === 200) {
       return { success: true, message: response.data.message };
+    } else if (response.data.code === 400 || response.data.code === 401) {
+      return { success: false, message: response.data.message };
     }
+
     return { success: false, message: '알 수 없는 오류가 발생했습니다.' };
   } catch (error) {
     return handleError(error, '닉네임 변경 중 오류가 발생했습니다.');
@@ -95,6 +119,8 @@ export const updateIntroduce = async (data: Introduce) => {
 
     if (response.data.code === 200) {
       return { success: true, message: response.data.message };
+    } else if (response.data.code === 401) {
+      return { success: false, message: response.data.message };
     }
 
     return { success: false, message: '알 수 없는 오류가 발생했습니다.' };

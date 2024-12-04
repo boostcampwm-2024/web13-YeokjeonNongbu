@@ -73,6 +73,10 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
   useEffect(() => {
     if (isLoggedIn()) {
       fetch();
+      setNickname(() => {
+        const savedNickname = localStorage.getItem('nickname');
+        return savedNickname || '';
+      });
     }
   }, [fetchCash, fetchCurrentValue, location, nickname]);
 

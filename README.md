@@ -1,27 +1,125 @@
-# 역전농부
+<div align="center">
 
-홍수로 농장을 잃은 부캠이가 재기를 꿈꾸며 투자에 도전하는 모의 투자 게임
+![image](https://github.com/user-attachments/assets/e99dcff5-7d6c-42b0-b33c-dd3406b82219)
 
-==================
+<p align="center">
+홍수로 농장을 잃은 부캠이가 재기를 꿈꾸며 투자에 도전하는 모의 투자 게임<br/>
+================== <br/>
+옛날 옛적, 부캠이는 작은 농장을 돌보며 🌾 평화로운 나날을 보내고 있었습니다.<br>
+그러나 어느 날, <strong>갑작스러운 홍수 ⛈️</strong>로 농장이 모두 망해버리고 말았습니다.
+<br/>
+😔 절망하던 부캠이는 옆 마을 철수씨가 투자로 성공해 <strong>💰 부자가 되었다는 소식</strong>을 듣게 됩니다.<br>
+"나도 다시 일어설 수 있어!" 결심한 부캠이는 <strong>📚 투자 공부</strong>를 시작하며 새로운 도전에 나서기로 합니다.<br/>
+이제 <strong>🚀 부캠이의 투자 모험</strong>이 시작됩니다!
 
-옛날 옛적, 부캠이는 작은 농장을 돌보며 🌾 평화로운 나날을 보내고 있었습니다.  
-그러나 어느 날, **갑작스러운 홍수 ⛈️**로 농장이 모두 망해버리고 말았습니다.
+</p>
 
-😔 절망하던 부캠이는 옆 마을 철수씨가 투자로 성공해 **💰 부자가 되었다는 소식**을 듣게 됩니다.  
-_"나도 다시 일어설 수 있어!"_ 결심한 부캠이는 **📚 투자 공부**를 시작하며 새로운 도전에 나서기로 합니다.
+<p align="center">
+    <a href="https://ambitious-cafe-d87.notion.site/YeokjeonNongbu-128cec1cf54c8008946fcb4b2004f5c7?pvs=4">
+        <img src="https://img.shields.io/badge/역전농부 팀 노션-000000?&logo=notion&logoColor=white" alt="Notion" style="vertical-align: middle;" /></a>
+    &nbsp; | &nbsp; 
+    <a href="https://github.com/boostcampwm-2024/web13-YeokjeonNongbu/wiki">
+        <img src="https://img.shields.io/badge/역전농부 Wiki-181717?&logo=github&logoColor=white" alt="Wiki" style="vertical-align: middle;" />
+    </a>
 
-이제 **🚀 부캠이의 투자 모험**이 시작됩니다!
+</p>
+</div>
 
-==================
+# 프로젝트 핵심 기능
 
-## 📑 목차
+## 인트로
 
-1. [:busts_in_silhouette: 팀원 소개](#-팀원-소개)
-2. [:handshake: 협업 전략](#-협업-전략)
-3. [:scroll: 그라운드룰](#-그라운드룰)
-4. [:art: 기획 및 디자인](#-기획-및-디자인)
-5. [🛠 개발 공통 자료](#-개발-공통-자료)
-6. [:open_file_folder: 협업 및 개발 문서](#-협업-및-개발-문서)
+![login](https://github.com/user-attachments/assets/cd2dde49-6bd3-415b-9c0d-3b4ad0eed41f)
+
+- 첫 접속 인트로 페이지
+- 로그인(소셜 로그인) 및 회원가입 기능
+
+## 마이페이지 & 랭킹
+
+![myPageAndRank](https://github.com/user-attachments/assets/06e93e93-0370-4c34-8920-779fe2433398)
+
+- 사용자 정보 조회 페이지
+- 현재 본인의 보유 자산과 거래 기록 확인 가능
+- 사용자의 현재 랭킹과 상위 랭킹 조회 가능
+
+## 로또
+
+![lotto](https://github.com/user-attachments/assets/7534b4c2-3ad6-4572-95b0-3cd2b614e25e)
+
+- 즉석 복권을 통해 수익을 얻을 수 있는 기능
+- 확률에 따른 1~5등까지 다양하게 제공
+
+## 작물 농장 거래
+
+![trade](https://github.com/user-attachments/assets/f0c1bbcd-f862-400d-9a78-e7b05c90a22a)
+
+- 웹소켓 기반의 작물 거래 시장 제공
+- 실제 사용자들의 거래를 통해 금액이 반영
+- 각 작물을 매수 & 매도를 통해 사용자가 손익을 얻을 수 있음
+
+## 기술 스택
+
+<h3 align="center">Common</h3>
+<p align="center">
+    <img src="https://img.shields.io/badge/TypeScript-3178C6?&logo=typescript&logoColor=white">
+    <img src="https://img.shields.io/badge/Node.js-339933?&logo=nodedotjs&logoColor=white">
+    <br/>
+    <img src="https://img.shields.io/badge/Prettier-F7B93E?&logo=prettier&logoColor=white">
+    <img src="https://img.shields.io/badge/ESLint-4B32C3?&logo=eslint&logoColor=white">
+    <img src="https://img.shields.io/badge/pnpm-222222?&logo=pnpm&logoColor=white">
+    <img src="https://img.shields.io/badge/Husky-7C7C7C?&logo=husky&logoColor=white">
+    <img src="https://img.shields.io/badge/WebSocket-4A90E2?&logo=websocket&logoColor=white">
+  
+</p>
+
+<h3 align="center">Frontend</h3>
+<p align="center">
+    <img src="https://img.shields.io/badge/React-61DAFB?&logo=react&logoColor=white">
+    <img src="https://img.shields.io/badge/TailwindCSS-06B6D4?&logo=tailwindcss&logoColor=white">
+    <img src="https://img.shields.io/badge/Vite-646CFF?&logo=vite&logoColor=white">
+    <br/>
+    <img src="https://img.shields.io/badge/Axios-5A29E4?&logo=axios&logoColor=white">
+    <img src="https://img.shields.io/badge/ReactRouter-CA4245?&logo=reactrouter&logoColor=white">
+    <img src="https://img.shields.io/badge/ApexCharts-00BFFF?&logo=apexcharts&logoColor=white">
+</p>
+
+<h3 align="center">Backend</h3>
+<p align="center">
+    <img src="https://img.shields.io/badge/NestJS-E0234E?&logo=nestjs&logoColor=white">
+    <img src="https://img.shields.io/badge/Swagger-85EA2D?&logo=swagger&logoColor=white">
+</p>
+
+<h3 align="center">Database</h3>
+<p align="center">
+    <img src="https://img.shields.io/badge/PostgreSQL-4169E1?&logo=postgresql&logoColor=white">
+    <img src="https://img.shields.io/badge/Redis-DC382D?&logo=redis&logoColor=white">
+    <img src="https://img.shields.io/badge/MongoDB-47A248?&logo=mongodb&logoColor=white">
+</p>
+
+<h3 align="center">CI/CD</h3>
+<p align="center">
+    <img src="https://img.shields.io/badge/Docker-2496ED?&logo=docker&logoColor=white">
+    <img src="https://img.shields.io/badge/Nginx-009639?&logo=nginx&logoColor=white">
+    <img src="https://img.shields.io/badge/NCP-00B2A9?&logo=naver&logoColor=white">
+    <img src="https://img.shields.io/badge/GitHub%20Actions-2088FF?&logo=githubactions&logoColor=white">
+</p>
+
+<h3 align="center">Co-work</h3>
+<p align="center">
+    <img src="https://img.shields.io/badge/Notion-000000?&logo=notion&logoColor=white">
+    <img src="https://img.shields.io/badge/Slack-4A154B?&logo=slack&logoColor=white">
+    <img src="https://img.shields.io/badge/GitHub-181717?&logo=github&logoColor=white">
+    <img src="https://img.shields.io/badge/Postman-FF6C37?&logo=postman&logoColor=white">
+    <img src="https://img.shields.io/badge/Figma-F24E1E?&logo=figma&logoColor=white">
+</p>
+
+## 아키텍처
+
+![image](https://github.com/user-attachments/assets/04c3fbcd-d475-4ff5-a48a-d63315a69f79)
+
+## ERD
+
+![image](https://github.com/user-attachments/assets/e2a581cc-a886-4af2-9865-a9c62e1c9a21)
 
 ## 👥 팀원 소개
 
@@ -65,20 +163,3 @@ _"나도 다시 일어설 수 있어!"_ 결심한 부캠이는 **📚 투자 공
     </td>
   </tr>
 </table>
-
-## 🤝 협업 전략
-
-- [제페토](https://zep.us/play/VqqO14)
-- [그라운드룰](https://github.com/boostcampwm-2024/web13-YeokjeonNongbu/wiki/%EA%B7%B8%EB%9D%BC%EC%9A%B4%EB%93%9C-%EB%A3%B0)
-
-## 🎨 기획 및 디자인
-
-- [기획서](https://github.com/boostcampwm-2024/web13-YeokjeonNongbu/wiki/%EA%B8%B0%ED%9A%8D%EC%84%9C)
-- [디자인](https://www.figma.com/design/Qa4Xzjkjz3uc0pQw09rUzq/%EC%97%AD%EC%A0%84%EB%86%8D%EB%B6%80?node-id=59-2&node-type=canvas&t=0kLr2l0ZrZ0HYqDi-0)
-- [와이어프레임](https://www.figma.com/design/Qa4Xzjkjz3uc0pQw09rUzq/%EC%97%AD%EC%A0%84%EB%86%8D%EB%B6%80?node-id=0-1&node-type=canvas&t=0kLr2l0ZrZ0HYqDi-0)
-- [목업](https://www.figma.com/design/Qa4Xzjkjz3uc0pQw09rUzq/%EC%97%AD%EC%A0%84%EB%86%8D%EB%B6%80?node-id=55-2&node-type=canvas&t=0kLr2l0ZrZ0HYqDi-0)
-
-## 📂 협업 및 개발 문서
-
-- [노션](https://ambitious-cafe-d87.notion.site/YeokjeonNongbu-128cec1cf54c8008946fcb4b2004f5c7?pvs=4)
-- [위키](https://github.com/boostcampwm-2024/web13-YeokjeonNongbu/wiki)

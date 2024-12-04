@@ -107,7 +107,7 @@ export class AuthService {
 
   private async generateTokens(memberId: number, nickname: string) {
     const payload = { memberId, nickname };
-    const accessToken = this.jwtService.sign(payload, { expiresIn: '1h' });
+    const accessToken = this.jwtService.sign(payload, { expiresIn: '24h' });
     const refreshToken = this.jwtService.sign(payload, { expiresIn: '7d' });
     return { accessToken, refreshToken };
   }
@@ -147,5 +147,15 @@ export class AuthService {
     if (!nickname || nickname.length < 2 || nickname.length > 10)
       throw new HttpException('닉네임은 2자에서 10자 사이로 입력해주세요.', HttpStatus.BAD_REQUEST);
     await this.databaseService.query(authQueries.updateNicknameQuery, [nickname, memberId]);
+  }
+
+  async emailCheck(email: string) {
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    if (!email || !emailRegex.test(email))
+      throw new HttpException('유효한 이메일 주소를 입력해주세요.', HttpStatus.BAD_REQUEST);
+    const existingUser = await this.databaseService.query(authQueries.findByEmailQuery, [email]);
+    if (existingUser.rows.length > 0) {
+      throw new HttpException('중복된 이메일입니다.', HttpStatus.BAD_REQUEST);
+    }
   }
 }
