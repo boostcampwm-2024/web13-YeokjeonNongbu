@@ -18,7 +18,7 @@ export class HasSufficientCashGuard implements CanActivate {
     const { tradingType, price, quantity, totalAmount } = request.body;
 
     let hasEnoughCash = false;
-    // 지정가 주문 확인
+    // 지정가 주문 확인.
     if (tradingType === 'limit') {
       hasEnoughCash = await this.canLimitBuyOrder(price, memberId, quantity);
     } else if (tradingType === 'market') {
