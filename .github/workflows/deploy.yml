@@ -54,4 +54,4 @@ jobs:
             docker rm myapp || true
 
             echo "Running new container..."
-            docker run -d --name myapp -p 3000:3000 -p 8080:8080 --env-file /root/src/config/.env ${{ secrets.DOCKER_HUB_USERNAME }}/myapp:latest
+            docker run -d --name myapp --network host --env-file /root/src/config/.env ${{ secrets.DOCKER_HUB_USERNAME }}/myapp:latest
